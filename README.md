@@ -613,14 +613,24 @@ Agradecemos a todos que contribuíram, testaram e apoiaram este projeto. O **Neu
 
 ---
 
+## 📞 Contato
+
+Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
+
+- **Nome:** Flávio Henrique Barbosa
+- **LinkedIn:** `https://www.linkedin.com/in/flávio-henrique-barbosa-38465938`
+- **Email:** flaviohenriquehb777@outlook.com
+
+---
+
 <div align="center">
 
 **⭐ Se este projeto foi útil para você, considere dar uma estrela no GitHub! ⭐**
 
-[![GitHub stars](https://img.shields.io/github/stars/username/NeuroTranslator_PT_EN?style=social)](https://github.com/username/NeuroTranslator_PT_EN/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/username/NeuroTranslator_PT_EN?style=social)](https://github.com/username/NeuroTranslator_PT_EN/network/members)
-[![GitHub watchers](https://img.shields.io/github/watchers/username/NeuroTranslator_PT_EN?style=social)](https://github.com/username/NeuroTranslator_PT_EN/watchers)
+[![GitHub stars](https://img.shields.io/github/stars/flaviohenriquehb777/NeuroTranslator_PT_EN?style=social)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/flaviohenriquehb777/NeuroTranslator_PT_EN?style=social)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/network/members)
+[![GitHub watchers](https://img.shields.io/github/watchers/flaviohenriquehb777/NeuroTranslator_PT_EN?style=social)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/watchers)
 
-**© 2025 NeuroTranslator Project. Desenvolvido com ❤️ e ☕ para a comunidade open source.**
+**© 2025 NeuroTranslator Project. Desenvolvido com ❤️ e ☕ por Flávio Henrique Barbosa.**
 
 </div>
