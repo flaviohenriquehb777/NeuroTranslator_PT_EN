@@ -8,19 +8,19 @@
 
 ## 📋 Sumário
 
-- [🌟 Visão Geral](#visão-geral)
-- [🏗️ Arquitetura do Sistema](#arquitetura-do-sistema)
-- [📁 Estrutura Completa do Projeto](#estrutura-completa-do-projeto)
-- [🚀 Instalação e Configuração](#instalação-e-configuração)
-- [💻 Como Usar](#como-usar)
-- [🔬 Desenvolvimento e Pesquisa](#desenvolvimento-e-pesquisa)
-- [📈 Cronograma de Desenvolvimento](#cronograma-de-desenvolvimento)
-- [🤝 Contribuição](#contribuição)
-- [📄 Licença](#licença)
-- [🙏 Agradecimentos](#agradecimentos)
-- [📞 Contato e Suporte](#contato-e-suporte)
-- [🎉 Conclusão](#conclusão)
-- [📞 Contato](#contato)
+- [🌟 Visão Geral](#-visão-geral)
+- [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
+- [📁 Estrutura Completa do Projeto](#-estrutura-completa-do-projeto)
+- [🚀 Instalação e Configuração](#-instalação-e-configuração)
+- [💻 Como Usar](#-como-usar)
+- [🔬 Desenvolvimento e Pesquisa](#-desenvolvimento-e-pesquisa)
+- [📈 Cronograma de Desenvolvimento](#-cronograma-de-desenvolvimento)
+- [🤝 Contribuição](#-contribuição)
+- [📄 Licença](#-licença)
+- [🙏 Agradecimentos](#-agradecimentos)
+- [📞 Contato e Suporte](#-contato-e-suporte)
+- [🎉 Conclusão](#-conclusão)
+- [📞 Contato](#-contato)
 
 ---
 
