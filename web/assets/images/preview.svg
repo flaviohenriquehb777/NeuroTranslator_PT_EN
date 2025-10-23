@@ -19,9 +19,56 @@
   <!-- Header -->
   <rect width="800" height="120" fill="url(#header)" filter="url(#shadow)"/>
   
-  <!-- Logo -->
-  <circle cx="100" cy="60" r="25" fill="#e2e8f0" opacity="0.9"/>
-  <path d="M 100 45 L 115 75 L 85 75 Z" fill="#e53e3e"/>
+  <!-- Logo Real do NeuroTranslator -->
+  <g transform="translate(75, 35) scale(0.4)">
+    <!-- Anel externo metálico -->
+    <circle cx="25" cy="25" r="24" fill="url(#metalOuter)" filter="url(#shadow)"/>
+    
+    <!-- Anel interno -->
+    <circle cx="25" cy="25" r="18" fill="url(#metalInner)"/>
+    
+    <!-- Centro metálico -->
+    <circle cx="25" cy="25" r="12" fill="url(#metalCenter)"/>
+    
+    <!-- Triângulo vermelho principal -->
+    <path d="M 25 10 L 35 30 L 15 30 Z" fill="url(#redTriangle)" filter="url(#shadow)"/>
+    
+    <!-- Triângulo interno menor -->
+    <path d="M 25 15 L 30 25 L 20 25 Z" fill="url(#innerTriangle)"/>
+    
+    <!-- Gradientes para a logo -->
+    <defs>
+      <radialGradient id="metalOuter" cx="30%" cy="30%">
+        <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+        <stop offset="30%" style="stop-color:#e9ecef;stop-opacity:1" />
+        <stop offset="70%" style="stop-color:#6c757d;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#343a40;stop-opacity:1" />
+      </radialGradient>
+      
+      <radialGradient id="metalInner" cx="30%" cy="30%">
+        <stop offset="0%" style="stop-color:#495057;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#343a40;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#212529;stop-opacity:1" />
+      </radialGradient>
+      
+      <radialGradient id="metalCenter" cx="30%" cy="30%">
+        <stop offset="0%" style="stop-color:#6c757d;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#495057;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#343a40;stop-opacity:1" />
+      </radialGradient>
+      
+      <linearGradient id="redTriangle" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#dc3545;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#c82333;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#bd2130;stop-opacity:1" />
+      </linearGradient>
+      
+      <linearGradient id="innerTriangle" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#495057;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#212529;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+  </g>
   
   <!-- Title -->
   <text x="140" y="50" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white">🧠 NeuroTranslator PT-EN</text>
