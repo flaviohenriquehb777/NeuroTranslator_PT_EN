@@ -3,10 +3,26 @@
 <div align="center">
   
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![Web App](https://img.shields.io/badge/Web%20App-Online-blue)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
 
 </div>
+
+## 📋 Sumário
+
+- [🌟 Visão Geral](#-visão-geral)
+- [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
+- [📁 Estrutura Completa do Projeto](#-estrutura-completa-do-projeto)
+- [🚀 Instalação e Configuração](#-instalação-e-configuração)
+- [💻 Como Usar](#-como-usar)
+- [🔬 Desenvolvimento e Pesquisa](#-desenvolvimento-e-pesquisa)
+- [📈 Cronograma de Desenvolvimento](#-cronograma-de-desenvolvimento)
+- [🤝 Contribuição](#-contribuição)
+- [📄 Licença](#-licença)
+- [🙏 Agradecimentos](#-agradecimentos)
+- [📞 Contato e Suporte](#-contato-e-suporte)
+- [🎉 Conclusão](#-conclusão)
+- [📞 Contato](#-contato)
+
+---
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
