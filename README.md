@@ -1,8 +1,12 @@
 # 🧠 NeuroTranslator PT-EN
 
-[![NeuroTranslator Web App - Tradução Neural em Tempo Real](https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.png)](https://flaviohenriquedev.github.io/NeuroTranslator_PT_EN/)
+<div align="center">
+  <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
+    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.png" alt="NeuroTranslator Web App - Tradução Neural em Tempo Real" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  </a>
+</div>
 
-**🚀 [Acesse a Aplicação Web](https://flaviohenriquedev.github.io/NeuroTranslator_PT_EN/) - Clique na imagem acima!**
+**🚀 [Acesse a Aplicação Web](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/) - Clique na imagem acima!**
 
 > 🌟 **Aplicação Web Moderna**: Interface responsiva com tema noturno estrelado, reconhecimento de voz, captura de câmera e tradução em tempo real!
 
