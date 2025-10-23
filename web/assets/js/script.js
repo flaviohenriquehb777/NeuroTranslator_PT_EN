@@ -27,6 +27,7 @@ class NeuroTranslatorWeb {
     init() {
         this.initElements();
         this.initEventListeners();
+        this.checkMobileCompatibility(); // Verificar compatibilidade móvel primeiro
         this.checkBrowserSupport();
         this.loadSettings();
         console.log('🚀 NeuroTranslator Web inicializado');
@@ -104,6 +105,38 @@ class NeuroTranslatorWeb {
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
     }
     
+    
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    checkMobileCompatibility() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        
+        if (isMobile && !isSecure) {
+            this.showMobileSecurityWarning();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    showMobileSecurityWarning() {
+        const warning = document.createElement('div');
+        warning.className = 'mobile-security-warning';
+        warning.innerHTML = `
+            <div class="warning-content">
+                <i class="fas fa-mobile-alt"></i>
+                <h3>Dispositivo Móvel Detectado</h3>
+                <p>O reconhecimento de voz requer HTTPS em dispositivos móveis.</p>
+                <p>Para usar esta funcionalidade, acesse via HTTPS.</p>
+                <button onclick="this.parentElement.parentElement.remove()">Entendi</button>
+            </div>
+        `;
+        document.body.appendChild(warning);
+    }
+    
     checkBrowserSupport() {
         // Verificar suporte à câmera
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -158,15 +191,31 @@ class NeuroTranslatorWeb {
         this.speech.recognition = new SpeechRecognition();
         
         // Configurações iniciais mais conservadoras
-        this.speech.recognition.continuous = false; // Evita erros de rede prolongados
+        
+        // Configurações otimizadas para mobile
+        if (this.isMobileDevice()) {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = false; // Reduzir processamento
+            this.speech.recognition.maxAlternatives = 1;
+        } else {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = true;
+            this.speech.recognition.maxAlternatives = 1;
+        } // Evita erros de rede prolongados
         this.speech.recognition.interimResults = true;
         this.speech.recognition.maxAlternatives = 1;
         this.speech.recognition.lang = this.getLanguageCode(this.elements.sourceLanguage.value);
         
+        // Configurações específicas para mobile com melhor tratamento de erros
         this.speech.recognition.onstart = () => {
             console.log('🎤 Reconhecimento de fala iniciado');
             this.elements.speechStatus.textContent = '🎤 Reconhecimento: Ouvindo...';
             this.elements.toggleSpeech.classList.add('active');
+            
+            // Para dispositivos móveis, mostrar feedback visual adicional
+            if (this.isMobileDevice()) {
+                this.elements.speechStatus.style.animation = 'pulse 1.5s infinite';
+            }
         };
         
         this.speech.recognition.onresult = (event) => {
@@ -182,14 +231,19 @@ class NeuroTranslatorWeb {
                 }
             }
             
-            // Mostrar resultado intermediário
-            if (interimTranscript) {
+            // Mostrar resultado intermediário apenas em desktop
+            if (interimTranscript && !this.isMobileDevice()) {
                 this.elements.speechStatus.textContent = `🎤 Ouvindo: "${interimTranscript}"`;
             }
             
             if (finalTranscript) {
                 this.elements.sourceText.value += finalTranscript + ' ';
                 this.elements.speechStatus.textContent = '🎤 Reconhecimento: Texto capturado!';
+                
+                // Remover animação em mobile
+                if (this.isMobileDevice()) {
+                    this.elements.speechStatus.style.animation = '';
+                }
                 
                 if (this.translation.autoTranslate) {
                     this.translateText();
@@ -199,7 +253,11 @@ class NeuroTranslatorWeb {
                 if (this.translation.liveMode && this.speech.active) {
                     setTimeout(() => {
                         if (this.speech.active) {
-                            this.speech.recognition.start();
+                            try {
+                                this.speech.recognition.start();
+                            } catch (e) {
+                                console.warn('Erro ao reiniciar reconhecimento:', e);
+                            }
                         }
                     }, 1000);
                 }
@@ -211,14 +269,16 @@ class NeuroTranslatorWeb {
             
             let errorMessage = '';
             let shouldRestart = false;
+            let showMobileHelp = false;
             
             switch(event.error) {
                 case 'network':
-                    errorMessage = 'Erro de rede. Tentando novamente...';
-                    shouldRestart = true;
+                    errorMessage = 'Erro de rede. Verifique sua conexão.';
+                    shouldRestart = !this.isMobileDevice(); // Não reiniciar automaticamente em mobile
                     break;
                 case 'not-allowed':
                     errorMessage = 'Permissão negada. Permita o acesso ao microfone.';
+                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'no-speech':
                     errorMessage = 'Nenhuma fala detectada. Tente falar mais alto.';
@@ -226,9 +286,11 @@ class NeuroTranslatorWeb {
                     break;
                 case 'audio-capture':
                     errorMessage = 'Erro no microfone. Verifique se está conectado.';
+                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'service-not-allowed':
                     errorMessage = 'Serviço não permitido. Requer HTTPS.';
+                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'aborted':
                     errorMessage = 'Reconhecimento interrompido.';
@@ -239,8 +301,18 @@ class NeuroTranslatorWeb {
             
             this.elements.speechStatus.textContent = `🎤 ${errorMessage}`;
             
-            // Tentar reiniciar automaticamente para alguns erros
-            if (shouldRestart && this.speech.active && this.translation.liveMode) {
+            // Remover animação em caso de erro
+            if (this.isMobileDevice()) {
+                this.elements.speechStatus.style.animation = '';
+            }
+            
+            // Mostrar ajuda específica para mobile
+            if (showMobileHelp) {
+                this.showMobilePermissionHelp(event.error);
+            }
+            
+            // Tentar reiniciar automaticamente para alguns erros (apenas desktop)
+            if (shouldRestart && this.speech.active && this.translation.liveMode && !this.isMobileDevice()) {
                 setTimeout(() => {
                     if (this.speech.active) {
                         console.log('🔄 Tentando reiniciar reconhecimento...');
@@ -248,22 +320,99 @@ class NeuroTranslatorWeb {
                             this.speech.recognition.start();
                         } catch (e) {
                             console.error('Erro ao reiniciar:', e);
-                            this.stopSpeech();
                         }
                     }
                 }, 2000);
-            } else if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) {
-                this.stopSpeech();
-                alert(`Erro no reconhecimento de fala: ${errorMessage}`);
             }
         };
         
         this.speech.recognition.onend = () => {
-            console.log('🎤 Reconhecimento de fala finalizado');
-            if (this.speech.active && !this.translation.liveMode) {
-                this.stopSpeech();
+            console.log('🔄 Reconhecimento de fala finalizado');
+            
+            // Remover animação
+            if (this.isMobileDevice()) {
+                this.elements.speechStatus.style.animation = '';
+            }
+            
+            if (this.speech.active) {
+                this.elements.speechStatus.textContent = '🎤 Reconhecimento: Pronto para ouvir';
+            } else {
+                this.elements.speechStatus.textContent = '🎤 Reconhecimento: Desativado';
+                this.elements.toggleSpeech.classList.remove('active');
             }
         };
+    }
+    
+    showMobilePermissionHelp(errorType) {
+        // Evitar múltiplos avisos
+        if (document.getElementById('mobilePermissionHelp')) {
+            return;
+        }
+        
+        let helpMessage = '';
+        let instructions = '';
+        
+        switch(errorType) {
+            case 'not-allowed':
+                helpMessage = 'Permissão de Microfone Negada';
+                instructions = `
+                    <p><strong>Para permitir o acesso ao microfone:</strong></p>
+                    <ul>
+                        <li><strong>Safari (iOS):</strong> Toque no ícone "aA" na barra de endereços → Configurações do Site → Microfone → Permitir</li>
+                        <li><strong>Chrome (Android):</strong> Toque no ícone do cadeado → Permissões → Microfone → Permitir</li>
+                        <li><strong>Firefox:</strong> Toque no ícone do escudo → Permissões → Microfone → Permitir</li>
+                    </ul>
+                    <p>Após alterar as permissões, recarregue a página.</p>
+                `;
+                break;
+            case 'audio-capture':
+                helpMessage = 'Problema com o Microfone';
+                instructions = `
+                    <p><strong>Verifique:</strong></p>
+                    <ul>
+                        <li>Se o microfone não está sendo usado por outro aplicativo</li>
+                        <li>Se o microfone não está silenciado nas configurações do dispositivo</li>
+                        <li>Tente fechar outros aplicativos que podem estar usando o microfone</li>
+                    </ul>
+                `;
+                break;
+            case 'service-not-allowed':
+                helpMessage = 'HTTPS Necessário';
+                instructions = `
+                    <p><strong>O reconhecimento de voz requer uma conexão segura (HTTPS).</strong></p>
+                    <p>Certifique-se de que está acessando o site via HTTPS ou localhost.</p>
+                `;
+                break;
+        }
+        
+        const helpDialog = document.createElement('div');
+        helpDialog.id = 'mobilePermissionHelp';
+        helpDialog.className = 'mobile-permission-help';
+        helpDialog.innerHTML = `
+            <div class="help-content">
+                <div class="help-header">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>${helpMessage}</h3>
+                </div>
+                <div class="help-body">
+                    ${instructions}
+                </div>
+                <div class="help-footer">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn-help-close">
+                        Entendi
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(helpDialog);
+        
+        // Auto-remover após 15 segundos
+        setTimeout(() => {
+            if (document.getElementById('mobilePermissionHelp')) {
+                document.getElementById('mobilePermissionHelp').remove();
+            }
+        }, 15000);
     }
     
     async toggleCamera() {
