@@ -10,8 +10,6 @@
   <strong>🚀 <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">Acesse a Aplicação Web</a> - Clique na imagem ou no link!</strong>
 </div>
 
-> 🌟 **Aplicação Web Moderna**: Interface responsiva com tema noturno estrelado, reconhecimento de voz, captura de câmera e tradução em tempo real!
-
 ## 🌟 Visão Geral
 
 O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning (CNN, RNN, Transformers) e Processamento de Linguagem Natural (NLP) para tradução bidirecional entre Português e Inglês. O sistema oferece uma interface moderna com reconhecimento de voz, síntese de fala, captura de vídeo e legendas em tempo real.
