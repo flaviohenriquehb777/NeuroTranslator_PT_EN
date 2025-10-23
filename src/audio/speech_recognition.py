@@ -1,11 +1,13 @@
 """
 Sistema de Reconhecimento de Fala (ASR) do NeuroTranslator PT-EN
-Converte áudio em texto usando modelos de deep learning
+Converte áudio em texto usando modelos de deep learning e reconhecimento em tempo real
 """
 
 import numpy as np
 import time
-from typing import Optional, Dict, Any, List
+import threading
+import queue
+from typing import Optional, Dict, Any, List, Callable
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -13,10 +15,12 @@ try:
     import librosa
     import torch
     from transformers import WhisperProcessor, WhisperForConditionalGeneration
+    import speech_recognition as sr
+    import pyaudio
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
-    print("⚠️ Bibliotecas de áudio não encontradas. Execute: pip install librosa torch transformers")
+    print("⚠️ Bibliotecas de áudio não encontradas. Execute: pip install librosa torch transformers speech_recognition pyaudio")
 
 from ..utils.logger import default_logger as logger
 
@@ -313,7 +317,175 @@ class SpeechRecognizer:
         return {
             "text": text,
             "language": language,
-            "confidence": random.uniform(0.85, 0.98),
-            "processing_time": duration,
-            "model": "whisper-simulation"
+            "confidence": 0.85,
+            "duration": duration,
+            "timestamp": time.time()
         }
+    
+    def start_real_time_recognition(self, callback, language="pt-BR"):
+        """
+        Iniciar reconhecimento de fala em tempo real
+        
+        Args:
+            callback: Função callback para receber texto reconhecido
+            language: Idioma para reconhecimento (pt-BR, en-US, etc.)
+        
+        Returns:
+            bool: True se iniciado com sucesso
+        """
+        try:
+            print(f"🎤 DEBUG: Iniciando reconhecimento em tempo real - idioma: {language}")
+            
+            # Verificar se áudio está disponível
+            if not AUDIO_AVAILABLE:
+                print("❌ DEBUG: Áudio não disponível")
+                return False
+            
+            # Configurar idioma
+            self.recognition_language = language
+            
+            # Configurar callback
+            self.recognition_callback = callback
+            
+            # Inicializar reconhecedor
+            self.recognizer = sr.Recognizer()
+            
+            # Configurar microfone com parâmetros otimizados
+            print("🔍 DEBUG: Configurando microfone...")
+            self.microphone = sr.Microphone(
+                device_index=None,  # Usar microfone padrão
+                sample_rate=16000,  # Taxa de amostragem otimizada
+                chunk_size=1024     # Tamanho do chunk otimizado
+            )
+            
+            # Calibrar microfone para ruído ambiente
+            print("🔍 DEBUG: Calibrando microfone para ruído ambiente...")
+            with self.microphone as source:
+                # Aumentar tempo de calibração para melhor adaptação
+                self.recognizer.adjust_for_ambient_noise(source, duration=2)
+                print(f"🔍 DEBUG: Nível de energia após calibração: {self.recognizer.energy_threshold}")
+            
+            # Configurar parâmetros do reconhecedor
+            self.recognizer.energy_threshold = max(300, self.recognizer.energy_threshold)  # Mínimo de 300
+            self.recognizer.dynamic_energy_threshold = True  # Ajuste dinâmico
+            self.recognizer.pause_threshold = 0.8  # Pausa mais curta para responsividade
+            self.recognizer.phrase_threshold = 0.3  # Detectar frases mais curtas
+            self.recognizer.non_speaking_duration = 0.5  # Reduzir tempo de não-fala
+            
+            print(f"🔍 DEBUG: Parâmetros configurados - energia: {self.recognizer.energy_threshold}, pausa: {self.recognizer.pause_threshold}")
+            
+            # Iniciar thread de reconhecimento
+            self.recognition_active = True
+            self.recognition_thread = threading.Thread(
+                target=self._real_time_recognition_loop,
+                daemon=True
+            )
+            self.recognition_thread.start()
+            
+            print("✅ DEBUG: Reconhecimento em tempo real iniciado com sucesso!")
+            return True
+            
+        except Exception as e:
+            print(f"❌ DEBUG: Erro ao iniciar reconhecimento: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def _real_time_recognition_loop(self):
+        """Loop principal de reconhecimento em tempo real"""
+        print("🔄 DEBUG: Iniciando loop de reconhecimento...")
+        
+        accumulated_text = ""
+        silence_count = 0
+        max_silence = 3  # Máximo de silêncios antes de processar
+        
+        try:
+            while self.recognition_active:
+                try:
+                    # Escutar áudio com timeout mais curto
+                    print("👂 DEBUG: Escutando áudio...")
+                    with self.microphone as source:
+                        # Timeout mais curto para maior responsividade
+                        audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
+                    
+                    print("🔍 DEBUG: Áudio capturado, processando...")
+                    
+                    # Reconhecer fala usando Google (mais rápido e preciso)
+                    try:
+                        text = self.recognizer.recognize_google(
+                            audio, 
+                            language=self.recognition_language,
+                            show_all=False
+                        )
+                        
+                        if text and len(text.strip()) > 0:
+                            print(f"✅ DEBUG: Texto reconhecido: '{text}'")
+                            
+                            # Calcular confiança baseada no comprimento e clareza
+                            confidence = min(0.95, 0.7 + (len(text) * 0.01))
+                            
+                            # Acumular texto se for continuação
+                            if accumulated_text and text.lower().startswith(accumulated_text.lower().split()[-1:]):
+                                accumulated_text = text
+                            else:
+                                accumulated_text = text
+                            
+                            # Chamar callback com texto reconhecido
+                            if self.recognition_callback:
+                                self.recognition_callback(accumulated_text, confidence)
+                            
+                            silence_count = 0  # Reset contador de silêncio
+                        else:
+                            print("🔍 DEBUG: Texto vazio reconhecido")
+                            silence_count += 1
+                            
+                    except sr.UnknownValueError:
+                        print("🔍 DEBUG: Não foi possível entender o áudio")
+                        silence_count += 1
+                        
+                    except sr.RequestError as e:
+                        print(f"❌ DEBUG: Erro no serviço de reconhecimento: {e}")
+                        # Tentar reconhecimento offline como fallback
+                        try:
+                            text = self.recognizer.recognize_sphinx(audio)
+                            if text and len(text.strip()) > 0:
+                                print(f"✅ DEBUG: Texto reconhecido (offline): '{text}'")
+                                confidence = 0.6  # Confiança menor para reconhecimento offline
+                                if self.recognition_callback:
+                                    self.recognition_callback(text, confidence)
+                        except:
+                            print("❌ DEBUG: Reconhecimento offline também falhou")
+                        
+                except sr.WaitTimeoutError:
+                    print("⏰ DEBUG: Timeout na escuta - continuando...")
+                    silence_count += 1
+                    
+                except Exception as e:
+                    print(f"❌ DEBUG: Erro no loop de reconhecimento: {e}")
+                    time.sleep(0.1)
+                
+                # Processar silêncio prolongado
+                if silence_count >= max_silence:
+                    print("🔇 DEBUG: Silêncio prolongado detectado")
+                    silence_count = 0
+                    accumulated_text = ""  # Limpar texto acumulado
+                
+                # Pequena pausa para não sobrecarregar CPU
+                time.sleep(0.05)
+                
+        except Exception as e:
+            print(f"❌ DEBUG: Erro crítico no loop de reconhecimento: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        finally:
+            print("🔄 DEBUG: Loop de reconhecimento finalizado")
+
+    def stop_real_time_recognition(self) -> None:
+        """Para o reconhecimento em tempo real"""
+        self.recognition_active = False
+        
+        if hasattr(self, 'recognition_thread') and self.recognition_thread.is_alive():
+            self.recognition_thread.join(timeout=2.0)
+            
+        logger.info("Reconhecimento em tempo real parado")

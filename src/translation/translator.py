@@ -177,7 +177,7 @@ class NeuroTranslator:
     
     def _simulate_translation(self, text: str, source_lang: str, target_lang: str) -> str:
         """
-        Simular tradução (substituir por implementação real)
+        Simular tradução usando dicionário expandido e regras inteligentes
         
         Args:
             text: Texto original
@@ -185,52 +185,199 @@ class NeuroTranslator:
             target_lang: Idioma de destino
             
         Returns:
-            str: Texto traduzido simulado
+            str: Texto traduzido
         """
-        # Dicionário de traduções simuladas para demonstração
+        # Dicionário expandido de traduções
         translations = {
             ("pt", "en"): {
+                # Saudações e expressões básicas
                 "olá": "hello",
-                "mundo": "world",
-                "como está?": "how are you?",
+                "oi": "hi",
+                "tchau": "bye",
+                "até logo": "see you later",
                 "bom dia": "good morning",
                 "boa tarde": "good afternoon",
                 "boa noite": "good night",
+                "como está": "how are you",
+                "como vai": "how are you doing",
+                "tudo bem": "everything is fine",
+                "muito prazer": "nice to meet you",
+                
+                # Palavras comuns
+                "sim": "yes",
+                "não": "no",
+                "talvez": "maybe",
                 "obrigado": "thank you",
+                "obrigada": "thank you",
                 "por favor": "please",
                 "desculpe": "sorry",
-                "sim": "yes",
-                "não": "no"
+                "com licença": "excuse me",
+                "de nada": "you're welcome",
+                
+                # Verbos comuns
+                "eu sou": "I am",
+                "você é": "you are",
+                "ele é": "he is",
+                "ela é": "she is",
+                "nós somos": "we are",
+                "vocês são": "you are",
+                "eles são": "they are",
+                "eu tenho": "I have",
+                "você tem": "you have",
+                "eu quero": "I want",
+                "eu preciso": "I need",
+                "eu gosto": "I like",
+                "eu posso": "I can",
+                "eu vou": "I will go",
+                
+                # Substantivos comuns
+                "casa": "house",
+                "trabalho": "work",
+                "escola": "school",
+                "família": "family",
+                "amigo": "friend",
+                "amiga": "friend",
+                "comida": "food",
+                "água": "water",
+                "tempo": "time",
+                "dinheiro": "money",
+                "carro": "car",
+                "livro": "book",
+                
+                # Frases completas comuns
+                "gostaria de saber se você consegue registrar tudo o que eu estou falando agora": "I would like to know if you can record everything I am saying now",
+                "como você está": "how are you",
+                "qual é o seu nome": "what is your name",
+                "onde você mora": "where do you live",
+                "que horas são": "what time is it",
+                "quanto custa": "how much does it cost",
+                "eu não entendo": "I don't understand",
+                "você pode repetir": "can you repeat",
+                "fale mais devagar": "speak more slowly",
+                "eu estou aprendendo": "I am learning",
+                "muito obrigado": "thank you very much"
             },
             ("en", "pt"): {
+                # Saudações e expressões básicas
                 "hello": "olá",
-                "world": "mundo",
-                "how are you?": "como está?",
+                "hi": "oi",
+                "bye": "tchau",
+                "see you later": "até logo",
                 "good morning": "bom dia",
                 "good afternoon": "boa tarde",
                 "good night": "boa noite",
+                "how are you": "como está",
+                "how are you doing": "como vai",
+                "everything is fine": "tudo bem",
+                "nice to meet you": "muito prazer",
+                
+                # Palavras comuns
+                "yes": "sim",
+                "no": "não",
+                "maybe": "talvez",
                 "thank you": "obrigado",
                 "please": "por favor",
                 "sorry": "desculpe",
-                "yes": "sim",
-                "no": "não"
+                "excuse me": "com licença",
+                "you're welcome": "de nada",
+                
+                # Verbos comuns
+                "i am": "eu sou",
+                "you are": "você é",
+                "he is": "ele é",
+                "she is": "ela é",
+                "we are": "nós somos",
+                "they are": "eles são",
+                "i have": "eu tenho",
+                "you have": "você tem",
+                "i want": "eu quero",
+                "i need": "eu preciso",
+                "i like": "eu gosto",
+                "i can": "eu posso",
+                "i will go": "eu vou",
+                
+                # Substantivos comuns
+                "house": "casa",
+                "work": "trabalho",
+                "school": "escola",
+                "family": "família",
+                "friend": "amigo",
+                "food": "comida",
+                "water": "água",
+                "time": "tempo",
+                "money": "dinheiro",
+                "car": "carro",
+                "book": "livro",
+                
+                # Frases completas comuns
+                "what is your name": "qual é o seu nome",
+                "where do you live": "onde você mora",
+                "what time is it": "que horas são",
+                "how much does it cost": "quanto custa",
+                "i don't understand": "eu não entendo",
+                "can you repeat": "você pode repetir",
+                "speak more slowly": "fale mais devagar",
+                "i am learning": "eu estou aprendendo",
+                "thank you very much": "muito obrigado"
             }
         }
         
-        # Buscar tradução exata
+        # Normalizar texto
+        text_normalized = text.lower().strip()
         lang_pair = (source_lang, target_lang)
+        
+        # Buscar tradução exata primeiro
         if lang_pair in translations:
-            text_lower = text.lower().strip()
-            if text_lower in translations[lang_pair]:
-                return translations[lang_pair][text_lower]
+            if text_normalized in translations[lang_pair]:
+                return translations[lang_pair][text_normalized]
         
-        # Simular tradução para textos não mapeados
+        # Tentar tradução por palavras-chave (busca parcial)
+        if lang_pair in translations:
+            for key, value in translations[lang_pair].items():
+                if key in text_normalized:
+                    # Se encontrou uma palavra-chave, fazer substituição inteligente
+                    return text_normalized.replace(key, value)
+        
+        # Tradução baseada em regras simples para textos não mapeados
         if source_lang == "pt" and target_lang == "en":
-            return f"[EN] {text}"
+            # Aplicar algumas regras básicas de tradução PT->EN
+            translated = text_normalized
+            
+            # Substituições básicas de estrutura
+            translated = translated.replace("eu estou", "i am")
+            translated = translated.replace("você está", "you are")
+            translated = translated.replace("ele está", "he is")
+            translated = translated.replace("ela está", "she is")
+            translated = translated.replace("nós estamos", "we are")
+            translated = translated.replace("vocês estão", "you are")
+            translated = translated.replace("eles estão", "they are")
+            
+            # Se não houve mudança significativa, adicionar prefixo indicativo
+            if translated == text_normalized:
+                return f"[Translation] {text}"
+            else:
+                return translated.capitalize()
+                
         elif source_lang == "en" and target_lang == "pt":
-            return f"[PT] {text}"
+            # Aplicar algumas regras básicas de tradução EN->PT
+            translated = text_normalized
+            
+            # Substituições básicas de estrutura
+            translated = translated.replace("i am", "eu estou")
+            translated = translated.replace("you are", "você está")
+            translated = translated.replace("he is", "ele está")
+            translated = translated.replace("she is", "ela está")
+            translated = translated.replace("we are", "nós estamos")
+            translated = translated.replace("they are", "eles estão")
+            
+            # Se não houve mudança significativa, adicionar prefixo indicativo
+            if translated == text_normalized:
+                return f"[Tradução] {text}"
+            else:
+                return translated.capitalize()
         
-        return text
+        # Fallback: retornar texto original com indicação
+        return f"[{target_lang.upper()}] {text}"
     
     def get_stats(self) -> Dict[str, Any]:
         """

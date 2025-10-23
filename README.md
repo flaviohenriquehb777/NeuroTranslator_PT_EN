@@ -1,8 +1,26 @@
 # 🧠 NeuroTranslator PT-EN
 
+[![NeuroTranslator Web App - Tradução Neural em Tempo Real](web/assets/images/preview.png)](https://flaviohenriquedev.github.io/NeuroTranslator_PT_EN/)
+
+**🚀 [Acesse a Aplicação Web](https://flaviohenriquedev.github.io/NeuroTranslator_PT_EN/) - Clique na imagem acima!**
+
+> 🌟 **Aplicação Web Moderna**: Interface responsiva com tema noturno estrelado, reconhecimento de voz, captura de câmera e tradução em tempo real!
+
 ## 🌟 Visão Geral
 
 O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning (CNN, RNN, Transformers) e Processamento de Linguagem Natural (NLP) para tradução bidirecional entre Português e Inglês. O sistema oferece uma interface moderna com reconhecimento de voz, síntese de fala, captura de vídeo e legendas em tempo real.
+
+### 🌐 Versão Web Disponível
+
+Agora disponível como **aplicação web responsiva** que funciona diretamente no navegador! A versão web inclui:
+- 📱 **Design Responsivo**: Otimizado para desktop, tablet e smartphone
+- 🌌 **Tema Noturno Estrelado**: Interface moderna com fundo de céu estrelado e animações suaves
+- 🎤 **Reconhecimento de Voz**: Usando Web Speech API para captura de áudio em tempo real
+- 📹 **Captura de Câmera**: Acesso à câmera via WebRTC para funcionalidades visuais
+- 🔄 **Tradução em Tempo Real**: Integração com APIs de tradução modernas
+- 💾 **Histórico Local**: Armazenamento das traduções no navegador com persistência
+- ⚡ **Zero Instalação**: Funciona em qualquer navegador moderno sem downloads
+- 🎨 **Logo Personalizada**: Interface com identidade visual única e profissional
 
 ### ✨ Principais Funcionalidades
 

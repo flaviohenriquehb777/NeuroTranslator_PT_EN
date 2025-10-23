@@ -1,0 +1,44 @@
+# NeuroTranslator PT-EN - Configuração Padrão
+# Arquivo de configuração principal da aplicação
+
+# Configurações da Interface
+interface:
+  theme: "dark"
+  language: "pt"
+  window_size: [1200, 800]
+  camera_size: [320, 240]
+  
+# Configurações de Tradução
+translation:
+  default_source: "auto"  # pt, en, auto
+  default_target: "en"    # pt, en
+  model_type: "balanced"  # fast, accurate, balanced
+  
+# Configurações de Áudio/Fala
+audio:
+  sample_rate: 16000
+  chunk_size: 1024
+  format: "wav"
+  channels: 1
+  silence_threshold: 500
+  
+# Configurações de Câmera
+camera:
+  device_id: 0
+  width: 640
+  height: 480
+  fps: 30
+  
+# Configurações de Logging
+logging:
+  level: "INFO"
+  console: true
+  file: true
+  max_files: 10
+  
+# Configurações de Performance
+performance:
+  use_gpu: true
+  max_workers: 4
+  timeout: 30
+  cache_models: true

@@ -98,13 +98,15 @@ def setup_environment():
     for directory in directories:
         Path(directory).mkdir(parents=True, exist_ok=True)
     
-    # Verificar dependências críticas
+    # Verificar dependências críticas (sem pandas para evitar erro pyarrow)
     try:
         import torch
         import transformers
         import customtkinter
         import numpy as np
-        import pandas as pd
+        import cv2
+        import speech_recognition
+        print("✅ Dependências principais verificadas")
     except ImportError as e:
         print(f"❌ Dependência crítica não encontrada: {e}")
         print("📋 Execute: pip install -r requirements.txt")
@@ -118,7 +120,7 @@ def run_gui_mode(config, args):
     
     try:
         app = NeuroTranslatorGUI(config=config)
-        app.run()
+        app.mainloop()
     except Exception as e:
         logging.error(f"Erro na interface gráfica: {e}")
         print(f"❌ Erro ao executar interface: {e}")
