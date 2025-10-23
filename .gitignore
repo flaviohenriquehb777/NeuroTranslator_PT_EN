@@ -1,0 +1,42 @@
+# Arquivos de segurança - chaves privadas
+*.key
+*.pem
+server.crt
+server.key
+
+# Logs
+logs/
+*.log
+
+# Cache de modelos
+models/cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Dados temporários
+data/temp/
+temp/
+
+# Configurações locais
+config/local.yaml
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Dependências Python
+venv/
+env/
+.venv/
