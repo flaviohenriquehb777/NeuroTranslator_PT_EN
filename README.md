@@ -25,6 +25,7 @@ Agora disponível como **aplicação web responsiva** que funciona diretamente n
 - 💾 **Histórico Local**: Armazenamento das traduções no navegador com persistência
 - ⚡ **Zero Instalação**: Funciona em qualquer navegador moderno sem downloads
 - 🎨 **Logo Personalizada**: Interface com identidade visual única e profissional
+- 🔧 **Compatibilidade Samsung**: Otimizações específicas para Samsung Internet Browser
 
 ### ✨ Principais Funcionalidades
 

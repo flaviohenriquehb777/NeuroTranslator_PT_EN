@@ -194,19 +194,9 @@ class NeuroTranslatorWeb {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         this.speech.recognition = new SpeechRecognition();
         
-        // Configurações iniciais mais conservadoras
-        
-        // Configurações otimizadas para mobile
-        if (this.isMobileDevice()) {
-            this.speech.recognition.continuous = false;
-            this.speech.recognition.interimResults = false; // Reduzir processamento
-            this.speech.recognition.maxAlternatives = 1;
-        } else {
-            this.speech.recognition.continuous = false;
-            this.speech.recognition.interimResults = true;
-            this.speech.recognition.maxAlternatives = 1;
-        } // Evita erros de rede prolongados
-        this.speech.recognition.interimResults = true;
+        // Configurações otimizadas para Samsung Internet
+        this.speech.recognition.continuous = false;
+        this.speech.recognition.interimResults = false;
         this.speech.recognition.maxAlternatives = 1;
         this.speech.recognition.lang = this.getLanguageCode(this.elements.sourceLanguage.value);
         
@@ -215,56 +205,30 @@ class NeuroTranslatorWeb {
             console.log('🎤 Reconhecimento de fala iniciado');
             this.elements.speechStatus.textContent = '🎤 Reconhecimento: Ouvindo...';
             this.elements.toggleSpeech.classList.add('active');
-            
-            // Para dispositivos móveis, mostrar feedback visual adicional
-            if (this.isMobileDevice()) {
-                this.elements.speechStatus.style.animation = 'pulse 1.5s infinite';
-            }
+            this.elements.toggleSpeech.innerHTML = '<i class="fas fa-microphone-alt"></i> Ouvindo...';
         };
         
         this.speech.recognition.onresult = (event) => {
             let finalTranscript = '';
-            let interimTranscript = '';
             
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
                     finalTranscript += transcript;
-                } else {
-                    interimTranscript += transcript;
                 }
-            }
-            
-            // Mostrar resultado intermediário apenas em desktop
-            if (interimTranscript && !this.isMobileDevice()) {
-                this.elements.speechStatus.textContent = `🎤 Ouvindo: "${interimTranscript}"`;
             }
             
             if (finalTranscript) {
+                console.log('🎤 Texto reconhecido:', finalTranscript);
                 this.elements.sourceText.value += finalTranscript + ' ';
                 this.elements.speechStatus.textContent = '🎤 Reconhecimento: Texto capturado!';
-                
-                // Remover animação em mobile
-                if (this.isMobileDevice()) {
-                    this.elements.speechStatus.style.animation = '';
-                }
                 
                 if (this.translation.autoTranslate) {
                     this.translateText();
                 }
                 
-                // Reiniciar automaticamente se continuous mode estiver ativo
-                if (this.translation.liveMode && this.speech.active) {
-                    setTimeout(() => {
-                        if (this.speech.active) {
-                            try {
-                                this.speech.recognition.start();
-                            } catch (e) {
-                                console.warn('Erro ao reiniciar reconhecimento:', e);
-                            }
-                        }
-                    }, 1000);
-                }
+                // Parar o reconhecimento após capturar o texto
+                this.stopSpeech();
             }
         };
         
@@ -272,29 +236,22 @@ class NeuroTranslatorWeb {
             console.error('❌ Erro no reconhecimento de fala:', event.error);
             
             let errorMessage = '';
-            let shouldRestart = false;
-            let showMobileHelp = false;
             
             switch(event.error) {
                 case 'network':
                     errorMessage = 'Erro de rede. Verifique sua conexão.';
-                    shouldRestart = !this.isMobileDevice(); // Não reiniciar automaticamente em mobile
                     break;
                 case 'not-allowed':
                     errorMessage = 'Permissão negada. Permita o acesso ao microfone.';
-                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'no-speech':
                     errorMessage = 'Nenhuma fala detectada. Tente falar mais alto.';
-                    shouldRestart = true;
                     break;
                 case 'audio-capture':
                     errorMessage = 'Erro no microfone. Verifique se está conectado.';
-                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'service-not-allowed':
                     errorMessage = 'Serviço não permitido. Requer HTTPS.';
-                    showMobileHelp = this.isMobileDevice();
                     break;
                 case 'aborted':
                     errorMessage = 'Reconhecimento interrompido.';
@@ -304,45 +261,23 @@ class NeuroTranslatorWeb {
             }
             
             this.elements.speechStatus.textContent = `🎤 ${errorMessage}`;
-            
-            // Remover animação em caso de erro
-            if (this.isMobileDevice()) {
-                this.elements.speechStatus.style.animation = '';
-            }
-            
-            // Mostrar ajuda específica para mobile
-            if (showMobileHelp) {
-                this.showMobilePermissionHelp(event.error);
-            }
-            
-            // Tentar reiniciar automaticamente para alguns erros (apenas desktop)
-            if (shouldRestart && this.speech.active && this.translation.liveMode && !this.isMobileDevice()) {
-                setTimeout(() => {
-                    if (this.speech.active) {
-                        console.log('🔄 Tentando reiniciar reconhecimento...');
-                        try {
-                            this.speech.recognition.start();
-                        } catch (e) {
-                            console.error('Erro ao reiniciar:', e);
-                        }
-                    }
-                }, 2000);
-            }
+            this.stopSpeech();
         };
         
         this.speech.recognition.onend = () => {
             console.log('🔄 Reconhecimento de fala finalizado');
             
-            // Remover animação
-            if (this.isMobileDevice()) {
-                this.elements.speechStatus.style.animation = '';
-            }
-            
-            if (this.speech.active) {
-                this.elements.speechStatus.textContent = '🎤 Reconhecimento: Pronto para ouvir';
-            } else {
+            // Só atualizar status se não estiver mais ativo
+            if (!this.speech.active) {
                 this.elements.speechStatus.textContent = '🎤 Reconhecimento: Desativado';
                 this.elements.toggleSpeech.classList.remove('active');
+                this.elements.toggleSpeech.innerHTML = '<i class="fas fa-microphone"></i> Falar';
+            } else {
+                // Se ainda está ativo, significa que terminou naturalmente
+                this.elements.speechStatus.textContent = '🎤 Reconhecimento: Pronto para ouvir';
+                this.speech.active = false;
+                this.elements.toggleSpeech.classList.remove('active');
+                this.elements.toggleSpeech.innerHTML = '<i class="fas fa-microphone"></i> Falar';
             }
         };
     }
@@ -504,36 +439,20 @@ class NeuroTranslatorWeb {
         }
         
         try {
-            // Verificar e solicitar permissão do microfone primeiro
-            console.log('🎤 Solicitando permissão do microfone...');
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('✅ Permissão do microfone concedida');
-            
             this.speech.active = true;
             this.elements.speechStatus.textContent = '🎤 Reconhecimento: Iniciando...';
             
             // Configurar idioma atual
             this.speech.recognition.lang = this.getLanguageCode(this.elements.sourceLanguage.value);
             
-            // Iniciar reconhecimento
+            // Iniciar reconhecimento diretamente (sem getUserMedia primeiro)
             this.speech.recognition.start();
             
         } catch (error) {
-            console.error('❌ Erro ao acessar microfone:', error);
+            console.error('❌ Erro ao iniciar reconhecimento:', error);
             
-            let errorMessage = '';
-            if (error.name === 'NotAllowedError') {
-                errorMessage = 'Permissão do microfone negada. Por favor, permita o acesso ao microfone.';
-            } else if (error.name === 'NotFoundError') {
-                errorMessage = 'Microfone não encontrado. Verifique se está conectado.';
-            } else if (error.name === 'NotSupportedError') {
-                errorMessage = 'Microfone não suportado neste navegador.';
-            } else {
-                errorMessage = `Erro ao acessar microfone: ${error.message}`;
-            }
-            
+            let errorMessage = `Erro ao iniciar reconhecimento: ${error.message}`;
             this.elements.speechStatus.textContent = `❌ ${errorMessage}`;
-            alert(errorMessage);
             this.speech.active = false;
         }
     }
