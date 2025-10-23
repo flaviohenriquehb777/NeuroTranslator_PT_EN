@@ -640,8 +640,8 @@ Agradecemos a todos que contribuíram, testaram e apoiaram este projeto. O **Neu
 Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
 
 - **Nome:** Flávio Henrique Barbosa
-- **LinkedIn:** `https://www.linkedin.com/in/flávio-henrique-barbosa-38465938`
-- **Email:** flaviohenriquehb777@outlook.com
+- **LinkedIn:** [https://www.linkedin.com/in/flávio-henrique-barbosa-38465938](https://www.linkedin.com/in/flávio-henrique-barbosa-38465938)
+- **Email:** [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
 
 ---
 
