@@ -138,6 +138,10 @@ class NeuroTranslatorWeb {
     }
     
     checkBrowserSupport() {
+        // Verificação específica para Edge Mobile
+        if (isEdgeMobile() && !handleEdgeMobileFallback()) {
+            return false;
+        }
         // Verificar suporte à câmera
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             console.warn('⚠️ Câmera não suportada neste navegador');
@@ -838,4 +842,109 @@ if ('serviceWorker' in navigator) {
                 console.log('❌ Falha ao registrar Service Worker:', error);
             });
     });
+}
+
+function isSamsungInternet() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('samsungbrowser') || 
+           userAgent.includes('samsung') ||
+           (userAgent.includes('android') && userAgent.includes('wv'));
+}
+
+
+// Configuração específica para Samsung Internet
+function configureSamsungSpeechRecognition(recognition) {
+    if (isSamsungInternet()) {
+        recognition.continuous = false; // Samsung Internet tem problemas com continuous=true
+        recognition.interimResults = false; // Desabilitar resultados intermediários
+        recognition.maxAlternatives = 1;
+        
+        // Timeout personalizado para Samsung
+        let samsungTimeout;
+        recognition.onstart = function() {
+            samsungTimeout = setTimeout(() => {
+                recognition.stop();
+                console.log('Samsung timeout aplicado');
+            }, 10000); // 10 segundos timeout
+        };
+        
+        recognition.onend = function() {
+            if (samsungTimeout) clearTimeout(samsungTimeout);
+        };
+    }
+}
+
+
+function ensureUserInteractionForSamsung() {
+    if (isSamsungInternet()) {
+        // Samsung Internet requer interação do usuário
+        document.addEventListener('touchstart', function samsungTouchHandler() {
+            window.samsungUserInteracted = true;
+            document.removeEventListener('touchstart', samsungTouchHandler);
+        }, { once: true });
+        
+        // Aguardar interação antes de iniciar reconhecimento
+        return new Promise((resolve) => {
+            if (window.samsungUserInteracted) {
+                resolve();
+            } else {
+                const checkInteraction = setInterval(() => {
+                    if (window.samsungUserInteracted) {
+                        clearInterval(checkInteraction);
+                        resolve();
+                    }
+                }, 100);
+            }
+        });
+    }
+    return Promise.resolve();
+}
+
+
+function isEdgeMobile() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('edg/') && userAgent.includes('mobile');
+}
+
+
+function handleEdgeMobileFallback() {
+    if (isEdgeMobile()) {
+        // Verificar se Speech Recognition está disponível
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn('Speech Recognition não disponível no Edge Mobile');
+            showTextInputFallback();
+            return false;
+        }
+        
+        // Verificar permissões de microfone
+        if (navigator.permissions) {
+            navigator.permissions.query({name: 'microphone'}).then(function(result) {
+                if (result.state === 'denied') {
+                    showMicrophonePermissionError();
+                }
+            });
+        }
+    }
+    return true;
+}
+
+
+function handleEdgeSpecificErrors(event) {
+    if (isEdgeMobile()) {
+        console.log('Edge Mobile - Erro específico:', event.error);
+        
+        switch(event.error) {
+            case 'not-allowed':
+                showEdgePermissionHelp();
+                break;
+            case 'service-not-allowed':
+                showEdgeServiceError();
+                break;
+            case 'network':
+                showEdgeNetworkError();
+                break;
+            default:
+                showEdgeGenericError(event.error);
+        }
+    }
 }
