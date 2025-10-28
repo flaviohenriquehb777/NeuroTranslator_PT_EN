@@ -10,20 +10,20 @@
 
 ## Sumário
 
-- [🌟 Visão Geral](#-visão-geral)
-- [🌐 Versão Web - Tema Escuro Moderno](#-versão-web---tema-escuro-moderno)
-- [✨ Principais Funcionalidades](#-principais-funcionalidades)
-- [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
-- [📁 Estrutura Completa do Projeto](#-estrutura-completa-do-projeto)
-- [🚀 Instalação e Configuração](#-instalação-e-configuração)
-- [📱 Como Usar](#-como-usar)
-- [🎨 Design e Interface](#-design-e-interface)
-- [🔧 Desenvolvimento e Pesquisa](#-desenvolvimento-e-pesquisa)
-- [📊 Cronograma de Desenvolvimento](#-cronograma-de-desenvolvimento)
-- [🤝 Contribuição](#-contribuição)
-- [📄 Licença](#-licença)
-- [🙏 Agradecimentos](#-agradecimentos)
-- [📞 Contato e Suporte](#-contato-e-suporte)
+- [Visão Geral](#visão-geral)
+- [Versão Web - Tema Escuro Moderno](#versão-web---tema-escuro-moderno)
+- [Principais Funcionalidades](#principais-funcionalidades)
+- [Arquitetura do Sistema](#arquitetura-do-sistema)
+- [Estrutura Completa do Projeto](#estrutura-completa-do-projeto)
+- [Instalação e Configuração](#instalação-e-configuração)
+- [Como Usar](#como-usar)
+- [Design e Interface](#design-e-interface)
+- [Desenvolvimento e Pesquisa](#desenvolvimento-e-pesquisa)
+- [Cronograma de Desenvolvimento](#cronograma-de-desenvolvimento)
+- [Contribuição](#contribuição)
+- [Licença](#licença)
+- [Agradecimentos](#agradecimentos)
+- [Contato e Suporte](#contato-e-suporte)
 
 ---
 
