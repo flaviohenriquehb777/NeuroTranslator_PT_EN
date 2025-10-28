@@ -29,7 +29,7 @@
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png?v=2025-01-28-1645" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
+    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png?v=2025-01-28-final" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
   </a>
 </div>
 
@@ -363,7 +363,9 @@ Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE.m
 
 Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
 
-• Nome: Flávio Henrique Barbosa • LinkedIn: [Flávio Henrique Barbosa | LinkedIn](https://linkedin.com/in/flaviohenriquehb777) • Email: [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
+• **Nome:** Flávio Henrique Barbosa
+• **LinkedIn:** [Flávio Henrique Barbosa | LinkedIn](https://linkedin.com/in/flaviohenriquehb777)
+• **Email:** [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
 
 ---
 
