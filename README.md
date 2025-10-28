@@ -29,7 +29,7 @@
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" />
+    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
   </a>
 </div>
 
@@ -359,23 +359,13 @@ Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE.m
 - **Mozilla** pelo suporte a tecnologias web modernas
 - **Comunidade Open Source** pelas bibliotecas e ferramentas
 
-## 📞 Contato e Suporte
+## 🔗 Contato:
 
-### 👨‍💻 **Desenvolvedor**
-**Flávio Henrique Barbosa**
-- 📧 **Email**: [flaviohenriquehb777@gmail.com](mailto:flaviohenriquehb777@gmail.com)
-- 💼 **LinkedIn**: [linkedin.com/in/flaviohenriquehb777](https://linkedin.com/in/flaviohenriquehb777)
-- 🐙 **GitHub**: [github.com/flaviohenriquehb777](https://github.com/flaviohenriquehb777)
+Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
 
-### 🌐 **Links do Projeto**
-- 🚀 **Aplicação Web**: [https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-- 📂 **Repositório**: [https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
-- 📋 **Issues**: [https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/issues](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/issues)
-
-### 🆘 **Suporte**
-- **Bugs e Issues**: Use o sistema de issues do GitHub
-- **Dúvidas**: Entre em contato por email
-- **Sugestões**: Pull requests são bem-vindos!
+• **Nome:** Flávio Henrique Barbosa
+• **LinkedIn:** [Flávio Henrique Barbosa | LinkedIn](https://linkedin.com/in/flaviohenriquehb777)
+• **Email:** [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
 
 ---
 
