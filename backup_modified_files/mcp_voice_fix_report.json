@@ -1,0 +1,20 @@
+{
+  "mcp_name": "MCP Fix Voice Recognition",
+  "version": "1.0.0",
+  "timestamp": "2025-10-24T16:28:30.788812",
+  "processed_files": [
+    "assets/js/ai-voice-vision.js",
+    "assets/js/script.js"
+  ],
+  "fixes_applied": [
+    "Correção do erro 'aborted' no SpeechRecognition",
+    "Correção do erro 'InvalidStateError: recognition has already started'",
+    "Implementação de controle de estado do reconhecimento",
+    "Adição de timeout de segurança",
+    "Tratamento específico de diferentes tipos de erro",
+    "Reinicialização automática em caso de falha",
+    "Verificação de permissões de microfone",
+    "Feedback visual de status do reconhecimento"
+  ],
+  "status": "success"
+}

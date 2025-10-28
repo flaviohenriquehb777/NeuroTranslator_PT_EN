@@ -8,6 +8,221 @@ class NeuroTranslatorWeb {
             active: false
         };
         
+        // Correção do reconhecimento de voz
+        this.initVoiceRecognition();
+    }
+    
+    initVoiceRecognition() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn('⚠️ Reconhecimento de voz não suportado');
+            return false;
+        }
+
+        try {
+            // Limpar instância anterior se existir
+            if (this.recognition) {
+                this.recognition.abort();
+                this.recognition = null;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            
+            // Configurações otimizadas
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.lang = this.currentLanguage || 'pt-BR';
+            this.recognition.maxAlternatives = 1;
+            
+            // Estado de controle
+            this.isRecognitionActive = false;
+            this.recognitionTimeout = null;
+            
+            // Event listeners com tratamento de erro
+            this.recognition.onstart = () => {
+                console.log('🎤 Reconhecimento iniciado');
+                this.isRecognitionActive = true;
+                this.updateVoiceStatus('listening');
+            };
+            
+            this.recognition.onresult = (event) => {
+                try {
+                    const result = event.results[0][0];
+                    const transcript = result.transcript.trim();
+                    const confidence = result.confidence;
+                    
+                    console.log(`🗣️ Reconhecido: "${transcript}" (${Math.round(confidence * 100)}%)`);
+                    
+                    if (confidence > 0.5) {
+                        this.processVoiceCommand(transcript);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao processar resultado:', error);
+                }
+            };
+            
+            this.recognition.onerror = (event) => {
+                console.error('❌ Erro no reconhecimento:', event.error);
+                this.isRecognitionActive = false;
+                this.updateVoiceStatus('error');
+                
+                // Tratamento específico de erros
+                switch (event.error) {
+                    case 'aborted':
+                        console.log('🔄 Reconhecimento abortado - reiniciando...');
+                        setTimeout(() => this.startVoiceRecognition(), 1000);
+                        break;
+                    case 'network':
+                        console.log('🌐 Erro de rede - tentando novamente...');
+                        setTimeout(() => this.startVoiceRecognition(), 2000);
+                        break;
+                    case 'not-allowed':
+                        console.error('🚫 Permissão de microfone negada');
+                        this.updateVoiceStatus('permission-denied');
+                        break;
+                    default:
+                        setTimeout(() => this.startVoiceRecognition(), 1500);
+                }
+            };
+            
+            this.recognition.onend = () => {
+                console.log('🔇 Reconhecimento finalizado');
+                this.isRecognitionActive = false;
+                this.updateVoiceStatus('idle');
+                
+                // Reiniciar automaticamente se não foi abortado intencionalmente
+                if (this.shouldKeepListening) {
+                    setTimeout(() => this.startVoiceRecognition(), 500);
+                }
+            };
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erro ao inicializar reconhecimento:', error);
+            return false;
+        }
+    }
+
+    startVoiceRecognition() {
+        try {
+            // Verificar se já está ativo
+            if (this.isRecognitionActive) {
+                console.log('⚠️ Reconhecimento já ativo');
+                return;
+            }
+            
+            // Verificar se existe instância
+            if (!this.recognition) {
+                if (!this.initVoiceRecognition()) {
+                    return;
+                }
+            }
+            
+            // Limpar timeout anterior
+            if (this.recognitionTimeout) {
+                clearTimeout(this.recognitionTimeout);
+            }
+            
+            // Iniciar com timeout de segurança
+            this.recognitionTimeout = setTimeout(() => {
+                if (this.isRecognitionActive) {
+                    console.log('⏰ Timeout do reconhecimento - reiniciando');
+                    this.stopVoiceRecognition();
+                    setTimeout(() => this.startVoiceRecognition(), 1000);
+                }
+            }, 10000);
+            
+            this.recognition.start();
+            
+        } catch (error) {
+            console.error('❌ Erro ao iniciar reconhecimento:', error);
+            this.isRecognitionActive = false;
+            
+            // Tentar reinicializar
+            setTimeout(() => {
+                this.initVoiceRecognition();
+                this.startVoiceRecognition();
+            }, 2000);
+        }
+    }
+
+    stopVoiceRecognition() {
+        try {
+            if (this.recognition && this.isRecognitionActive) {
+                this.shouldKeepListening = false;
+                this.recognition.abort();
+            }
+            
+            if (this.recognitionTimeout) {
+                clearTimeout(this.recognitionTimeout);
+                this.recognitionTimeout = null;
+            }
+            
+            this.isRecognitionActive = false;
+            
+        } catch (error) {
+            console.error('❌ Erro ao parar reconhecimento:', error);
+        }
+    }
+
+    updateVoiceStatus(status) {
+        const statusElement = document.getElementById('voice-status');
+        if (statusElement) {
+            statusElement.textContent = this.getStatusText(status);
+            statusElement.className = `voice-status ${status}`;
+        }
+    }
+
+    getStatusText(status) {
+        const statusTexts = {
+            'idle': '🎤 Pronto para ouvir',
+            'listening': '🔴 Ouvindo...',
+            'processing': '⚙️ Processando...',
+            'error': '❌ Erro no reconhecimento',
+            'permission-denied': '🚫 Permissão negada'
+        };
+        return statusTexts[status] || '🎤 Status desconhecido';
+    }
+
+    processVoiceCommand(transcript) {
+        const command = transcript.toLowerCase();
+        
+        // Verificar comando de ativação
+        if (command.includes('neuro traduza') || command.includes('neuro translate')) {
+            console.log('🚀 Comando de ativação detectado');
+            this.activateTranslation();
+        } else {
+            // Processar como texto para tradução
+            this.processTranslation(transcript);
+        }
+    }
+
+    activateTranslation() {
+        // Ativar modo de tradução
+        this.shouldKeepListening = true;
+        this.updateVoiceStatus('listening');
+        
+        // Feedback visual
+        const button = document.getElementById('voice-btn');
+        if (button) {
+            button.classList.add('active');
+        }
+    }
+
+    processTranslation(text) {
+        // Processar tradução do texto
+        const originalTextArea = document.getElementById('originalText');
+        if (originalTextArea) {
+            originalTextArea.value = text;
+            
+            // Disparar evento de tradução
+            const event = new Event('input', { bubbles: true });
+            originalTextArea.dispatchEvent(event);
+        }
+    }
+;
+        
         this.speech = {
             recognition: null,
             active: false,
@@ -20,14 +235,11 @@ class NeuroTranslatorWeb {
             liveMode: false
         };
         
-        // Neuro Assistant
-        this.neuroAssistant = {
-            active: false,
-            listening: false,
-            wakeWordDetected: false
-        };
-        
         this.elements = {};
+        
+        // Inicializar sistema de IA integrado
+        this.aiIntegration = null;
+        
         this.init();
     }
     
@@ -37,6 +249,10 @@ class NeuroTranslatorWeb {
         this.checkMobileCompatibility(); // Verificar compatibilidade móvel primeiro
         this.checkBrowserSupport();
         this.loadSettings();
+        
+        // Inicializar sistema de IA após elementos estarem prontos
+        this.initAISystem();
+        
         console.log('🚀 NeuroTranslator Web inicializado');
     }
     
@@ -69,10 +285,6 @@ class NeuroTranslatorWeb {
         this.elements.historyContainer = document.getElementById('historyContainer');
         this.elements.clearHistory = document.getElementById('clearHistory');
         
-        // Elementos do Assistente Neuro - REMOVIDO
-        // this.elements.toggleNeuroAssistant = document.getElementById('toggleNeuroAssistant');
-        // this.elements.neuroStatus = document.getElementById('neuroStatus');
-        
         // Elementos de status
         this.elements.translationStatus = document.getElementById('translationStatus');
         this.elements.processingTime = document.getElementById('processingTime');
@@ -80,8 +292,7 @@ class NeuroTranslatorWeb {
     }
     
     initEventListeners() {
-        // Câmera
-        this.elements.toggleCamera.addEventListener('click', () => this.toggleCamera());
+        // Câmera (removido - agora é automático)
         
         // Tradução
         this.elements.translateBtn.addEventListener('click', () => this.translateText());
@@ -90,19 +301,6 @@ class NeuroTranslatorWeb {
         
         // Fala
         this.elements.toggleSpeech.addEventListener('click', () => this.toggleSpeech());
-        
-        // Assistente Neuro - REMOVIDO
-        /*
-        if (this.elements.toggleNeuroAssistant) {
-            console.log('✅ Botão Neuro Assistant encontrado, adicionando event listener');
-            this.elements.toggleNeuroAssistant.addEventListener('click', () => {
-                console.log('🔘 Clique no botão Neuro detectado!');
-                this.toggleNeuroAssistant();
-            });
-        } else {
-            console.error('❌ Botão toggleNeuroAssistant não encontrado!');
-        }
-        */
         
         // Controles
         this.elements.clearText.addEventListener('click', () => this.clearText());
@@ -128,8 +326,7 @@ class NeuroTranslatorWeb {
         // Teclas de atalho
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
     }
-    
-    
+
     isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
@@ -194,33 +391,6 @@ class NeuroTranslatorWeb {
             this.elements.toggleSpeech.innerHTML = '<i class="fas fa-microphone-slash"></i> Fala não suportada';
             this.elements.speechStatus.textContent = '🎤 Reconhecimento: Não suportado';
         }
-        
-        // Verificar suporte a Speech Synthesis
-        if ('speechSynthesis' in window) {
-            console.log('✅ Síntese de voz suportada');
-            this.loadAvailableVoices();
-        } else {
-            console.warn('⚠️ Síntese de voz não suportada');
-        }
-    }
-    
-    loadAvailableVoices() {
-        // Aguardar carregamento das vozes
-        const loadVoices = () => {
-            const voices = speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                console.log('🎯 Vozes disponíveis:', voices.length);
-                voices.forEach(voice => {
-                    console.log(`- ${voice.name} (${voice.lang})`);
-                });
-            }
-        };
-        
-        // Carregar vozes imediatamente se disponíveis
-        loadVoices();
-        
-        // Aguardar evento de carregamento das vozes (alguns navegadores)
-        speechSynthesis.onvoiceschanged = loadVoices;
     }
     
     showSecurityWarning() {
@@ -246,7 +416,37 @@ class NeuroTranslatorWeb {
         this.speech.recognition = new SpeechRecognition();
         
         // Configurações otimizadas para Samsung Internet
-        this.speech.recognition.continuous = false;
+        
+        // Configurações otimizadas para mobile
+        if (this.isMobileDevice()) {
+            
+        // Configurações otimizadas para mobile
+        if (this.isMobileDevice()) {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = false; // Reduzir processamento
+            this.speech.recognition.maxAlternatives = 1;
+        } else {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = true;
+            this.speech.recognition.maxAlternatives = 1;
+        }
+            this.speech.recognition.interimResults = false; // Reduzir processamento
+            this.speech.recognition.maxAlternatives = 1;
+        } else {
+            
+        // Configurações otimizadas para mobile
+        if (this.isMobileDevice()) {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = false; // Reduzir processamento
+            this.speech.recognition.maxAlternatives = 1;
+        } else {
+            this.speech.recognition.continuous = false;
+            this.speech.recognition.interimResults = true;
+            this.speech.recognition.maxAlternatives = 1;
+        }
+            this.speech.recognition.interimResults = true;
+            this.speech.recognition.maxAlternatives = 1;
+        }
         this.speech.recognition.interimResults = false;
         this.speech.recognition.maxAlternatives = 1;
         this.speech.recognition.lang = this.getLanguageCode(this.elements.sourceLanguage.value);
@@ -259,7 +459,7 @@ class NeuroTranslatorWeb {
             this.elements.toggleSpeech.innerHTML = '<i class="fas fa-microphone-alt"></i> Ouvindo...';
         };
         
-        this.speech.recognition.onresult = async (event) => {
+        this.speech.recognition.onresult = (event) => {
             let finalTranscript = '';
             
             for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -275,7 +475,7 @@ class NeuroTranslatorWeb {
                 this.elements.speechStatus.textContent = '🎤 Reconhecimento: Texto capturado!';
                 
                 if (this.translation.autoTranslate) {
-                    await this.translateTextWithSpeech();
+                    this.translateText();
                 }
                 
                 // Parar o reconhecimento após capturar o texto
@@ -578,51 +778,6 @@ class NeuroTranslatorWeb {
         }
     }
     
-    async translateTextWithSpeech() {
-        const sourceText = this.elements.sourceText.value.trim();
-        if (!sourceText) {
-            return;
-        }
-        
-        const sourceLang = this.elements.sourceLanguage.value;
-        const targetLang = this.elements.targetLanguage.value;
-        
-        if (sourceLang === targetLang) {
-            return;
-        }
-        
-        this.showLoading(true);
-        this.elements.translationStatus.textContent = 'Traduzindo...';
-        
-        const startTime = Date.now();
-        
-        try {
-            // Usar Google Translate API (via MyMemory como fallback gratuito)
-            const translation = await this.callTranslationAPI(sourceText, sourceLang, targetLang);
-            
-            const processingTime = Date.now() - startTime;
-            
-            this.elements.targetText.value = translation;
-            this.elements.translationStatus.textContent = 'Tradução concluída';
-            this.elements.processingTime.textContent = `${processingTime}ms`;
-            
-            // Adicionar ao histórico
-            this.addToHistory(sourceText, translation, sourceLang, targetLang);
-            
-            console.log('✅ Tradução concluída:', translation);
-            
-            // Falar a tradução automaticamente
-            this.speakTranslation(translation, targetLang);
-            
-        } catch (error) {
-            console.error('❌ Erro na tradução:', error);
-            this.elements.translationStatus.textContent = 'Erro na tradução';
-            this.elements.targetText.value = 'Erro: Não foi possível traduzir o texto.';
-        } finally {
-            this.showLoading(false);
-        }
-    }
-    
     swapLanguages() {
         const sourceLang = this.elements.sourceLanguage.value;
         const targetLang = this.elements.targetLanguage.value;
@@ -810,531 +965,149 @@ class NeuroTranslatorWeb {
     
     loadSettings() {
         try {
-            const settings = localStorage.getItem('neuroTranslatorSettings');
-            if (settings) {
-                const parsed = JSON.parse(settings);
-                this.translation.autoTranslate = parsed.autoTranslate !== false;
-                this.translation.liveMode = parsed.liveMode === true;
-                
-                // Aplicar configurações aos elementos
-                if (this.elements.autoTranslate) {
-                    this.elements.autoTranslate.checked = this.translation.autoTranslate;
-                }
-                if (this.elements.liveMode) {
-                    this.elements.liveMode.checked = this.translation.liveMode;
-                }
-                
-                console.log('⚙️ Configurações carregadas:', parsed);
+            const settings = JSON.parse(localStorage.getItem('neurotranslator-settings') || '{}');
+            
+            if (settings.autoTranslate !== undefined) {
+                this.translation.autoTranslate = settings.autoTranslate;
+                this.elements.autoTranslate.checked = settings.autoTranslate;
             }
+            
+            if (settings.liveMode !== undefined) {
+                this.translation.liveMode = settings.liveMode;
+                this.elements.liveMode.checked = settings.liveMode;
+            }
+            
+            if (settings.history) {
+                this.translation.history = settings.history;
+                this.updateHistoryDisplay();
+            }
+            
+            if (settings.sourceLanguage) {
+                this.elements.sourceLanguage.value = settings.sourceLanguage;
+            }
+            
+            if (settings.targetLanguage) {
+                this.elements.targetLanguage.value = settings.targetLanguage;
+            }
+            
         } catch (error) {
-            console.error('❌ Erro ao carregar configurações:', error);
+            console.warn('⚠️ Erro ao carregar configurações:', error);
         }
     }
     
-    // Métodos do Assistente Neuro
-    toggleNeuroAssistant() {
-        console.log('🔄 toggleNeuroAssistant chamado, estado atual:', this.neuroAssistant.active);
-        console.log('🔍 Elementos disponíveis:', {
-            toggleButton: !!this.elements.toggleNeuroAssistant,
-            statusElement: !!this.elements.neuroStatus
-        });
-        
-        if (this.neuroAssistant.active) {
-            this.stopNeuroAssistant();
-        } else {
-            this.startNeuroAssistant();
-        }
-    }
-    
-    async startNeuroAssistant() {
+    // Inicializar sistema de IA integrado
+    async initAISystem() {
         try {
-            console.log('🤖 Iniciando Assistente Neuro...');
-            console.log('🔍 Verificando elementos:', {
-                toggleButton: this.elements.toggleNeuroAssistant,
-                statusElement: this.elements.neuroStatus
-            });
+            console.log('🤖 Inicializando sistema de IA...');
             
-            // Verificar se os elementos existem
-            if (!this.elements.toggleNeuroAssistant || !this.elements.neuroStatus) {
-                console.error('❌ Elementos do Neuro Assistant não encontrados!');
-                alert('❌ Erro: Elementos da interface não encontrados');
+            // Verificar se as classes de IA estão disponíveis
+            if (typeof NeuroAIIntegration === 'undefined') {
+                console.warn('⚠️ Módulos de IA não carregados. Continuando sem IA avançada.');
                 return;
             }
             
-            // Verificar protocolo de segurança
-            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            console.log('🔒 Protocolo seguro:', isSecure, 'Protocol:', location.protocol, 'Host:', location.hostname);
+            // Inicializar integração de IA
+            this.aiIntegration = new NeuroAIIntegration();
             
-            if (!isSecure) {
-                console.warn('⚠️ Protocolo não seguro detectado');
-                alert('⚠️ O Assistente Neuro pode não funcionar corretamente sem HTTPS. Tente acessar via localhost.');
-            }
+            // Configurar callbacks para integração com a aplicação principal
+            this.setupAICallbacks();
             
-            // Verificar suporte a reconhecimento de voz
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                console.error('❌ Reconhecimento de voz não suportado');
-                alert('❌ Reconhecimento de voz não suportado neste navegador');
-                return;
-            }
+            // Inicializar sistema de IA
+            await this.aiIntegration.init();
             
-            // Solicitar permissão do microfone explicitamente
-            try {
-                console.log('🎤 Solicitando permissão do microfone...');
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                console.log('✅ Permissão do microfone concedida');
-                stream.getTracks().forEach(track => track.stop()); // Parar o stream
-            } catch (micError) {
-                console.error('❌ Erro ao acessar microfone:', micError);
-                alert('❌ Erro ao acessar o microfone. Verifique as permissões do navegador.');
-                return;
-            }
+            // Ativar automaticamente o reconhecimento de voz
+            setTimeout(() => {
+                if (this.aiIntegration && this.aiIntegration.modules.voiceVision) {
+                    console.log('🎤 Ativando reconhecimento de voz automaticamente...');
+                    this.aiIntegration.modules.voiceVision.startVoiceActivation();
+                }
+            }, 2000); // Aguardar 2 segundos para garantir inicialização completa
             
-            // Resetar contador de tentativas de reconexão
-        this.neuroReconnectAttempts = 0;
-        
-        // Remover modo fallback se estiver ativo
-        this.removeNeuroFallback();
-            
-            // Inicializar reconhecimento de voz para wake word
-            this.initNeuroSpeechRecognition();
-            
-            this.neuroAssistant.active = true;
-            this.neuroAssistant.listening = true;
-            
-            // Atualizar interface
-            this.elements.toggleNeuroAssistant.classList.add('active');
-            this.elements.toggleNeuroAssistant.innerHTML = '<i class="fas fa-robot"></i><span>Neuro Ativo</span>';
-            this.elements.neuroStatus.textContent = '🤖 Neuro: Ouvindo "Vamos, Neuro!"';
-            
-            console.log('✅ Assistente Neuro ativado com sucesso');
+            console.log('✅ Sistema de IA inicializado com sucesso');
             
         } catch (error) {
-            console.error('❌ Erro ao iniciar Assistente Neuro:', error);
-            alert('Erro ao ativar o Assistente Neuro: ' + error.message);
+            console.error('❌ Erro ao inicializar sistema de IA:', error);
+            // Continuar funcionamento sem IA avançada
         }
     }
     
-    stopNeuroAssistant() {
-        console.log('🤖 Parando Assistente Neuro...');
+    // Configurar callbacks entre IA e aplicação principal
+    setupAICallbacks() {
+        if (!this.aiIntegration) return;
         
-        if (this.neuroSpeechRecognition) {
-            this.neuroSpeechRecognition.stop();
-        }
-        
-        this.neuroAssistant.active = false;
-        this.neuroAssistant.listening = false;
-        this.neuroAssistant.wakeWordDetected = false;
-        
-        // Atualizar interface
-        this.elements.toggleNeuroAssistant.classList.remove('active');
-        this.elements.toggleNeuroAssistant.innerHTML = '<i class="fas fa-robot"></i><span>Assistente Neuro</span>';
-        this.elements.neuroStatus.textContent = '🤖 Neuro: Desativado';
-        
-        console.log('✅ Assistente Neuro desativado');
-    }
-    
-    initNeuroSpeechRecognition() {
-        try {
-            console.log('🎤 Inicializando reconhecimento de voz do Neuro...');
+        // Callback para tradução via comando de voz
+        this.aiIntegration.onVoiceTranslation = async (text, detectedLanguage) => {
+            console.log('🎤 Tradução por voz:', text, 'Idioma:', detectedLanguage);
             
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            this.neuroSpeechRecognition = new SpeechRecognition();
-            
-            this.neuroSpeechRecognition.continuous = true;
-            this.neuroSpeechRecognition.interimResults = true;
-            this.neuroSpeechRecognition.lang = 'pt-BR';
-            
-            this.neuroSpeechRecognition.onstart = () => {
-                console.log('🎤 Neuro: Reconhecimento iniciado');
-            };
-            
-            this.neuroSpeechRecognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
-                
-                console.log('🎤 Neuro ouviu:', transcript);
-                
-                // Detectar wake word "Vamos, Neuro!"
-                if (transcript.toLowerCase().includes('vamos neuro') || 
-                    transcript.toLowerCase().includes('vamos, neuro')) {
-                    this.onWakeWordDetected(transcript);
-                }
-            };
-            
-            this.neuroSpeechRecognition.onerror = (event) => {
-                console.error('❌ Erro no reconhecimento Neuro:', event.error);
-                
-                if (event.error === 'not-allowed') {
-                    alert('❌ Permissão de microfone negada para o Assistente Neuro');
-                    this.stopNeuroAssistant();
-                } else if (event.error === 'no-speech') {
-                    console.log('⚠️ Nenhuma fala detectada, continuando...');
-                } else if (event.error === 'network') {
-                    console.warn('⚠️ Erro de rede no reconhecimento de voz. Tentando reconectar...');
-                    // Não parar o assistente, apenas tentar reconectar
-                    setTimeout(() => {
-                        if (this.neuroAssistant.active && this.neuroAssistant.listening) {
-                            try {
-                                console.log('🔄 Tentando reconectar reconhecimento de voz...');
-                                this.neuroSpeechRecognition.start();
-                            } catch (restartError) {
-                                console.error('❌ Erro ao reconectar:', restartError);
-                            }
-                        }
-                    }, 2000);
-                } else if (event.error === 'service-not-allowed') {
-                    console.error('❌ Serviço de reconhecimento não permitido');
-                    alert('❌ Serviço de reconhecimento de voz não está disponível. Verifique sua conexão com a internet.');
-                    this.stopNeuroAssistant();
-                } else {
-                    console.error('❌ Erro de reconhecimento:', event.error);
-                    // Para outros erros, tentar reconectar após um delay
-                    setTimeout(() => {
-                        if (this.neuroAssistant.active && this.neuroAssistant.listening) {
-                            try {
-                                this.neuroSpeechRecognition.start();
-                            } catch (restartError) {
-                                console.error('❌ Erro ao reiniciar após erro:', restartError);
-                            }
-                        }
-                    }, 1000);
-                }
-            };
-            
-            this.neuroSpeechRecognition.onend = () => {
-                console.log('🎤 Reconhecimento Neuro finalizado');
-                if (this.neuroAssistant.active && this.neuroAssistant.listening) {
-                    // Reiniciar reconhecimento se ainda estiver ativo
-                    console.log('🔄 Reiniciando reconhecimento Neuro...');
-                    setTimeout(() => {
-                        if (this.neuroAssistant.active && this.neuroAssistant.listening) {
-                            try {
-                                this.neuroSpeechRecognition.start();
-                            } catch (error) {
-                                console.error('❌ Erro ao reiniciar reconhecimento:', error);
-                                // Se falhar várias vezes, mostrar aviso ao usuário
-                                if (!this.neuroReconnectAttempts) {
-                                    this.neuroReconnectAttempts = 0;
-                                }
-                                this.neuroReconnectAttempts++;
-                                
-                                if (this.neuroReconnectAttempts > 3) {
-                                    console.warn('⚠️ Muitas tentativas de reconexão falharam');
-                                    this.elements.neuroStatus.textContent = '🤖 Neuro: Problemas de conectividade - Clique para reativar';
-                                    this.neuroAssistant.listening = false;
-                                    // Mostrar modo fallback
-                                    this.showNeuroFallback();
-                                } else {
-                                    // Tentar novamente após um delay maior
-                                    setTimeout(() => {
-                                        if (this.neuroAssistant.active) {
-                                            try {
-                                                this.neuroSpeechRecognition.start();
-                                            } catch (retryError) {
-                                                console.error('❌ Erro na nova tentativa:', retryError);
-                                            }
-                                        }
-                                    }, 3000);
-                                }
-                            }
-                        }
-                    }, 100);
-                }
-            };
-            
-            console.log('🎤 Iniciando reconhecimento de voz...');
-            this.neuroSpeechRecognition.start();
-            
-        } catch (error) {
-            console.error('❌ Erro ao inicializar reconhecimento Neuro:', error);
-            throw error;
-        }
-    }
-    
-    onWakeWordDetected(transcript) {
-        console.log('🎯 Wake word detectada!');
-        this.neuroAssistant.wakeWordDetected = true;
-        
-        // Atualizar status
-        this.elements.neuroStatus.textContent = '🤖 Neuro: Wake word detectada! Processando comando...';
-        
-        // Processar comando após wake word
-        this.processNeuroCommand(transcript);
-    }
-    
-    async processNeuroCommand(fullTranscript) {
-        try {
-            console.log('🧠 Processando comando Neuro:', fullTranscript);
-            
-            // Extrair comando após "Vamos, Neuro!"
-            const wakeWordIndex = fullTranscript.toLowerCase().search(/(vamos,?\s*neuro)/);
-            if (wakeWordIndex === -1) return;
-            
-            const commandPart = fullTranscript.substring(wakeWordIndex).replace(/(vamos,?\s*neuro[!.]?\s*)/i, '').trim();
-            
-            if (!commandPart) {
-                this.elements.neuroStatus.textContent = '🤖 Neuro: Aguardando comando...';
-                return;
+            // Definir idiomas baseado na detecção
+            if (detectedLanguage === 'pt') {
+                this.elements.sourceLanguage.value = 'pt';
+                this.elements.targetLanguage.value = 'en';
+            } else if (detectedLanguage === 'en') {
+                this.elements.sourceLanguage.value = 'en';
+                this.elements.targetLanguage.value = 'pt';
             }
             
-            console.log('📝 Comando extraído:', commandPart);
-            
-            // Detectar idioma de destino e texto para traduzir
-            const translationMatch = this.parseTranslationCommand(commandPart);
-            
-            if (translationMatch) {
-                await this.executeNeuroTranslation(translationMatch);
-            } else {
-                this.elements.neuroStatus.textContent = '🤖 Neuro: Comando não reconhecido';
-                console.log('❓ Comando não reconhecido:', commandPart);
-            }
-            
-        } catch (error) {
-            console.error('❌ Erro ao processar comando Neuro:', error);
-            this.elements.neuroStatus.textContent = '🤖 Neuro: Erro ao processar comando';
-        }
-        
-        // Resetar para ouvir novamente
-        setTimeout(() => {
-            if (this.neuroAssistant.active) {
-                this.neuroAssistant.wakeWordDetected = false;
-                this.elements.neuroStatus.textContent = '🤖 Neuro: Ouvindo "Vamos, Neuro!"';
-            }
-        }, 3000);
-    }
-    
-    parseTranslationCommand(command) {
-        // Padrões para detectar comandos de tradução
-        const patterns = [
-            /traduza?\s+para\s+o?\s*(inglês|english)\s+a?\s*frase[:\s]*(.*)/i,
-            /traduza?\s+para\s+o?\s*(português|portuguese)\s+a?\s*frase[:\s]*(.*)/i,
-            /traduza?\s+para\s+o?\s*(espanhol|spanish)\s+a?\s*frase[:\s]*(.*)/i,
-            /traduza?\s+para\s+o?\s*(francês|french)\s+a?\s*frase[:\s]*(.*)/i,
-            /translate\s+to\s+(portuguese|português|english|inglês|spanish|espanhol|french|francês)[:\s]*(.*)/i
-        ];
-        
-        for (const pattern of patterns) {
-            const match = command.match(pattern);
-            if (match) {
-                const targetLang = this.getLanguageCodeFromName(match[1]);
-                const textToTranslate = match[2].trim();
-                
-                if (targetLang && textToTranslate) {
-                    return {
-                        targetLanguage: targetLang,
-                        text: textToTranslate
-                    };
-                }
-            }
-        }
-        
-        return null;
-    }
-    
-    getLanguageCodeFromName(langName) {
-        const langMap = {
-            'inglês': 'en',
-            'english': 'en',
-            'português': 'pt',
-            'portuguese': 'pt',
-            'espanhol': 'es',
-            'spanish': 'es',
-            'francês': 'fr',
-            'french': 'fr'
+            // Preencher texto e traduzir
+            this.elements.sourceText.value = text;
+            await this.translateText();
         };
         
-        return langMap[langName.toLowerCase()] || null;
+        // Callback para atualização de status
+        this.aiIntegration.onStatusUpdate = (status) => {
+            console.log('📊 Status IA:', status);
+            this.updateAIIndicators(status);
+        };
     }
     
-    async executeNeuroTranslation(translationData) {
-        try {
-            console.log('🔄 Executando tradução Neuro:', translationData);
+    // Atualizar indicadores visuais da IA
+    updateAIIndicators(status) {
+        const voiceIndicator = document.getElementById('voiceIndicator');
+        const genderIndicator = document.getElementById('genderIndicator');
+        const languageIndicator = document.getElementById('languageIndicator');
+        const avatarStatus = document.getElementById('avatarStatus');
+        
+        if (voiceIndicator && status.voice) {
+            const icon = voiceIndicator.querySelector('i');
+            const text = voiceIndicator.querySelector('span');
             
-            // Detectar idioma do texto original
-            const sourceLang = this.detectLanguage(translationData.text);
-            
-            // Atualizar campos da interface
-            this.elements.sourceText.value = translationData.text;
-            this.elements.sourceLanguage.value = sourceLang;
-            this.elements.targetLanguage.value = translationData.targetLanguage;
-            
-            // Atualizar status
-            this.elements.neuroStatus.textContent = '🤖 Neuro: Traduzindo...';
-            
-            // Executar tradução
-            await this.translateText();
-            
-            // Falar a tradução
-            if (this.elements.targetText.value) {
-                this.speakTranslation(this.elements.targetText.value, translationData.targetLanguage);
+            if (status.voice.active) {
+                icon.className = 'fas fa-microphone';
+                text.textContent = 'Voz: Ativa';
+                voiceIndicator.classList.add('active');
+            } else {
+                icon.className = 'fas fa-microphone-slash';
+                text.textContent = 'Voz: Inativa';
+                voiceIndicator.classList.remove('active');
             }
-            
-            this.elements.neuroStatus.textContent = '🤖 Neuro: Tradução concluída!';
-            
-        } catch (error) {
-            console.error('❌ Erro na tradução Neuro:', error);
-            this.elements.neuroStatus.textContent = '🤖 Neuro: Erro na tradução';
         }
-    }
-    
-    detectLanguage(text) {
-        // Detecção simples baseada em padrões
-        const portugueseWords = ['o', 'a', 'de', 'para', 'com', 'em', 'um', 'uma', 'que', 'não', 'é', 'do', 'da'];
-        const englishWords = ['the', 'and', 'to', 'of', 'a', 'in', 'is', 'it', 'you', 'that', 'he', 'was', 'for'];
-        const spanishWords = ['el', 'la', 'de', 'que', 'y', 'a', 'en', 'un', 'es', 'se', 'no', 'te', 'lo'];
         
-        const words = text.toLowerCase().split(/\s+/);
-        
-        let ptScore = 0, enScore = 0, esScore = 0;
-        
-        words.forEach(word => {
-            if (portugueseWords.includes(word)) ptScore++;
-            if (englishWords.includes(word)) enScore++;
-            if (spanishWords.includes(word)) esScore++;
-        });
-        
-        if (ptScore > enScore && ptScore > esScore) return 'pt';
-        if (enScore > ptScore && enScore > esScore) return 'en';
-        if (esScore > ptScore && esScore > enScore) return 'es';
-        
-        return 'pt'; // Default para português
-    }
-    
-    speakTranslation(text, language) {
-        if ('speechSynthesis' in window) {
-            // Parar qualquer síntese anterior
-            speechSynthesis.cancel();
+        if (genderIndicator && status.gender) {
+            const icon = genderIndicator.querySelector('i');
+            const text = genderIndicator.querySelector('span');
             
-            const utterance = new SpeechSynthesisUtterance(text);
-            
-            // Configurar idioma para síntese de voz
-            const voiceLangMap = {
-                'pt': 'pt-BR',
-                'en': 'en-US',
-                'es': 'es-ES',
-                'fr': 'fr-FR'
-            };
-            
-            utterance.lang = voiceLangMap[language] || 'pt-BR';
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-            utterance.volume = 1;
-            
-            // Tentar encontrar uma voz específica para o idioma
-            const voices = speechSynthesis.getVoices();
-            const targetLang = voiceLangMap[language] || 'pt-BR';
-            
-            // Procurar voz nativa do idioma
-            const nativeVoice = voices.find(voice => 
-                voice.lang === targetLang || voice.lang.startsWith(language)
-            );
-            
-            if (nativeVoice) {
-                utterance.voice = nativeVoice;
-                console.log('🎯 Voz selecionada:', nativeVoice.name, nativeVoice.lang);
+            if (status.gender.detected) {
+                icon.className = status.gender.value === 'male' ? 'fas fa-mars' : 'fas fa-venus';
+                text.textContent = `Gênero: ${status.gender.value === 'male' ? 'Masculino' : 'Feminino'}`;
+                genderIndicator.classList.add('success');
+            } else {
+                icon.className = 'fas fa-user-question';
+                text.textContent = 'Gênero: Detectando...';
+                genderIndicator.classList.remove('success');
             }
-            
-            // Eventos de controle
-            utterance.onstart = () => {
-                console.log('🔊 Iniciando síntese de voz:', text);
-                this.elements.speechStatus.textContent = '🔊 Falando tradução...';
-            };
-            
-            utterance.onend = () => {
-                console.log('✅ Síntese de voz concluída');
-                this.elements.speechStatus.textContent = '🎤 Reconhecimento: Pronto';
-            };
-            
-            utterance.onerror = (event) => {
-                console.error('❌ Erro na síntese de voz:', event.error);
-                this.elements.speechStatus.textContent = '❌ Erro na síntese de voz';
-            };
-            
-            console.log('🔊 Falando tradução:', text);
-            speechSynthesis.speak(utterance);
-        } else {
-            console.warn('⚠️ Speech Synthesis não suportado');
-            this.elements.speechStatus.textContent = '⚠️ Síntese de voz não suportada';
-        }
-    }
-    
-    // Método de fallback para problemas de conectividade
-    showNeuroFallback() {
-        console.log('🔄 Ativando modo fallback do Neuro');
-        
-        if (this.elements.neuroStatus) {
-            this.elements.neuroStatus.innerHTML = `
-                🤖 Neuro: Problemas de conectividade detectados<br>
-                <small style="color: #666;">Clique no botão para reativar ou use o modo manual</small>
-            `;
         }
         
-        // Mostrar opção de entrada manual
-        const fallbackDiv = document.createElement('div');
-        fallbackDiv.id = 'neuro-fallback';
-        fallbackDiv.style.cssText = `
-            margin-top: 10px;
-            padding: 10px;
-            background: #f0f0f0;
-            border-radius: 5px;
-            border-left: 4px solid #ff6b6b;
-        `;
-        
-        fallbackDiv.innerHTML = `
-            <div style="margin-bottom: 10px;">
-                <strong>🔧 Modo Manual do Neuro</strong>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="neuro-manual-input" placeholder="Digite seu comando aqui..." 
-                       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <button id="neuro-manual-send" style="padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    Enviar
-                </button>
-            </div>
-            <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                Exemplo: "traduzir hello para português"
-            </div>
-        `;
-        
-        // Remover fallback anterior se existir
-        const existingFallback = document.getElementById('neuro-fallback');
-        if (existingFallback) {
-            existingFallback.remove();
+        if (languageIndicator && status.language) {
+            const text = languageIndicator.querySelector('span');
+            text.textContent = `Idioma: ${status.language.detected || 'Auto'}`;
+            
+            if (status.language.detected) {
+                languageIndicator.classList.add('success');
+            }
         }
         
-        // Adicionar após o status do Neuro
-        if (this.elements.neuroStatus && this.elements.neuroStatus.parentNode) {
-            this.elements.neuroStatus.parentNode.insertBefore(fallbackDiv, this.elements.neuroStatus.nextSibling);
-            
-            // Configurar eventos do modo manual
-            const manualInput = document.getElementById('neuro-manual-input');
-            const manualSend = document.getElementById('neuro-manual-send');
-            
-            const sendManualCommand = () => {
-                const command = manualInput.value.trim();
-                if (command) {
-                    console.log('📝 Comando manual do Neuro:', command);
-                    this.processNeuroCommand(command);
-                    manualInput.value = '';
-                }
-            };
-            
-            manualSend.addEventListener('click', sendManualCommand);
-            manualInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendManualCommand();
-                }
-            });
-        }
-    }
-    
-    // Remover modo fallback
-    removeNeuroFallback() {
-        const fallbackDiv = document.getElementById('neuro-fallback');
-        if (fallbackDiv) {
-            fallbackDiv.remove();
+        if (avatarStatus && status.avatar) {
+            avatarStatus.textContent = `🤖 Avatar: ${status.avatar.state || 'Carregando...'}`;
         }
     }
 }
@@ -1364,7 +1137,6 @@ function isSamsungInternet() {
            (userAgent.includes('android') && userAgent.includes('wv'));
 }
 
-
 // Configuração específica para Samsung Internet
 function configureSamsungSpeechRecognition(recognition) {
     if (isSamsungInternet()) {
@@ -1386,7 +1158,6 @@ function configureSamsungSpeechRecognition(recognition) {
         };
     }
 }
-
 
 function ensureUserInteractionForSamsung() {
     if (isSamsungInternet()) {
@@ -1413,12 +1184,10 @@ function ensureUserInteractionForSamsung() {
     return Promise.resolve();
 }
 
-
 function isEdgeMobile() {
     const userAgent = navigator.userAgent.toLowerCase();
     return userAgent.includes('edg/') && userAgent.includes('mobile');
 }
-
 
 function handleEdgeMobileFallback() {
     if (isEdgeMobile()) {
@@ -1440,7 +1209,6 @@ function handleEdgeMobileFallback() {
     }
     return true;
 }
-
 
 function handleEdgeSpecificErrors(event) {
     if (isEdgeMobile()) {

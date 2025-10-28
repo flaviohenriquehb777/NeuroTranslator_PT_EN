@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta name="description" content="Tradutor neural inteligente com reconhecimento de voz e detecção de gênero">
+    <meta name="keywords" content="tradutor, neural, AI, reconhecimento de voz, português, inglês">
+    <meta name="author" content="NeuroTranslator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <meta charset="UTF-8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroTranslator</title>
+    <title>NeuroTranslator PT-EN | Tradução Neural em Tempo Real</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,29 +19,31 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
+    <meta name="description" content="Tradutor neural inteligente com reconhecimento de voz e detecção de gênero">
+    <meta name="keywords" content="tradutor, neural, AI, reconhecimento de voz, português, inglês">
+    <meta name="author" content="NeuroTranslator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
             <div class="header-content">
                 <img src="./assets/images/logo_original.png" alt="NeuroTranslator Logo" class="logo" onerror="console.error('Erro ao carregar logo:', this.src)">
-                <h1><i class="fas fa-brain"></i> NeuroTranslator</h1>
+                <h1><i class="fas fa-brain"></i> NeuroTranslator PT-EN</h1>
                 <p class="subtitle">Tradução Neural em Tempo Real</p>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Camera Section -->
+            <!-- Camera Section for Gender Recognition -->
             <section class="camera-section">
                 <div class="camera-container">
-                    <video id="videoElement" autoplay muted></video>
-                    <canvas id="canvasElement" style="display: none;"></canvas>
-                    <div class="camera-overlay">
-                        <button id="toggleCamera" class="btn btn-camera">
-                            <i class="fas fa-camera"></i>
-                            <span>Ativar Câmera</span>
-                        </button>
+                    <div id="cameraCanvas" class="camera-canvas">
+                        <video id="cameraVideo" autoplay muted playsinline></video>
+                        <div class="camera-overlay">
+                            <div class="gender-indicator">
+                                <span id="genderStatus">👤 Detectando usuário...</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="camera-status">
-                    <span id="cameraStatus">📷 Câmera: Desativada</span>
                 </div>
             </section>
 
@@ -154,7 +161,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2025 NeuroTranslator - Desenvolvido por Flávio Henrique Barbosa</p>
+            <p>&copy; 2024 NeuroTranslator PT-EN - Desenvolvido por Flávio Henrique Barbosa</p>
             <p>Versão Web - Hospedado no GitHub Pages</p>
         </footer>
     </div>
@@ -168,6 +175,9 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/ai-voice-vision.js"></script>
+    <script src="assets/js/ai-integration.js"></script>
     <script src="assets/js/script.js"></script>
 </body>
 </html>

@@ -1,0 +1,101 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradientes metálicos para os anéis -->
+    <radialGradient id="metalOuter" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#e9ecef;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#6c757d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#343a40;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="metalInner" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#495057;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#343a40;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#212529;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="metalCenter" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#6c757d;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#495057;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#343a40;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Gradiente para o triângulo vermelho -->
+    <linearGradient id="redTriangle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc3545;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#c82333;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bd2130;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para o triângulo interno -->
+    <linearGradient id="innerTriangle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#495057;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#212529;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Sombra -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Brilho metálico -->
+    <filter id="metalShine">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Anel externo bege/creme -->
+  <circle cx="60" cy="60" r="58" fill="url(#metalOuter)" filter="url(#shadow)" stroke="#adb5bd" stroke-width="1"/>
+  
+  <!-- Anel intermediário escuro -->
+  <circle cx="60" cy="60" r="48" fill="url(#metalInner)" stroke="#495057" stroke-width="1"/>
+  
+  <!-- Anel interno -->
+  <circle cx="60" cy="60" r="38" fill="url(#metalCenter)" stroke="#6c757d" stroke-width="1"/>
+  
+  <!-- Pontos decorativos nos anéis -->
+  <g fill="#495057">
+    <circle cx="60" cy="12" r="1.5"/>
+    <circle cx="108" cy="60" r="1.5"/>
+    <circle cx="60" cy="108" r="1.5"/>
+    <circle cx="12" cy="60" r="1.5"/>
+    <circle cx="85" cy="25" r="1"/>
+    <circle cx="95" cy="85" r="1"/>
+    <circle cx="35" cy="95" r="1"/>
+    <circle cx="25" cy="35" r="1"/>
+  </g>
+  
+  <!-- Triângulo principal vermelho -->
+  <path d="M 60 22 L 88 78 L 32 78 Z" fill="url(#redTriangle)" stroke="#bd2130" stroke-width="1.5" filter="url(#metalShine)"/>
+  
+  <!-- Triângulo interno escuro -->
+  <path d="M 60 32 L 78 68 L 42 68 Z" fill="url(#innerTriangle)" stroke="#343a40" stroke-width="1"/>
+  
+  <!-- Losango central -->
+  <path d="M 60 38 L 70 55 L 60 72 L 50 55 Z" fill="url(#redTriangle)" stroke="#c82333" stroke-width="1"/>
+  
+  <!-- Letras FH -->
+  <g transform="translate(52, 48)" fill="#f8f9fa" stroke="#e9ecef" stroke-width="0.5">
+    <!-- F -->
+    <path d="M 0 0 L 0 16 M 0 0 L 6 0 M 0 8 L 4 8" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- H -->
+    <path d="M 10 0 L 10 16 M 16 0 L 16 16 M 10 8 L 16 8" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </g>
+  
+  <!-- Detalhes de brilho metálico -->
+  <g opacity="0.6">
+    <ellipse cx="45" cy="35" rx="8" ry="3" fill="url(#metalOuter)" opacity="0.3"/>
+    <ellipse cx="75" cy="45" rx="6" ry="2" fill="url(#metalOuter)" opacity="0.2"/>
+  </g>
+  
+  <!-- Linhas de acento nos cantos do triângulo -->
+  <g stroke="#bd2130" stroke-width="1" opacity="0.8">
+    <line x1="58" y1="24" x2="62" y2="24"/>
+    <line x1="86" y1="76" x2="90" y2="76"/>
+    <line x1="30" y1="76" x2="34" y2="76"/>
+  </g>
+</svg>

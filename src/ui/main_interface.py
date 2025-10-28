@@ -87,6 +87,22 @@ class NeuroTranslatorGUI(ctk.CTk):
             # Carregar modelo padrão
             self.translator.load_model("balanced")
         return self.translator
+
+    def _lazy_init_voice_assistant(self):
+        """Inicialização lazy do assistente de voz"""
+        if not hasattr(self, 'voice_assistant') or self.voice_assistant is None:
+            print("🔍 DEBUG: Inicializando assistente de voz Neuro pela primeira vez...")
+            from ..mcp.voice_assistant import NeuroVoiceAssistant
+            translator = self._lazy_init_translator()
+            self.voice_assistant = NeuroVoiceAssistant(config=self.config, translator=translator)
+            
+            # Configurar callbacks
+            self.voice_assistant.set_callbacks(
+                on_wake_word_detected=self._on_wake_word_detected,
+                on_command_processed=self._on_command_processed,
+                on_translation_complete=self._on_translation_complete
+            )
+        return self.voice_assistant
     def create_widgets(self):
         """Criar widgets da interface"""
         
@@ -196,6 +212,14 @@ class NeuroTranslatorGUI(ctk.CTk):
             fg_color="purple"
         )
         
+        # Botão do Assistente Neuro
+        self.neuro_assistant_button = ctk.CTkButton(
+            self.live_controls_frame,
+            text="🤖 Assistente Neuro",
+            command=self.toggle_neuro_assistant,
+            fg_color="red"
+        )
+        
         # Frame de vídeo
         self.video_frame = ctk.CTkFrame(self.live_frame)
         self.video_label = ctk.CTkLabel(
@@ -302,6 +326,7 @@ class NeuroTranslatorGUI(ctk.CTk):
         self.camera_button.pack(side="left", padx=5)
         self.speech_button.pack(side="left", padx=5)
         self.live_translate_button.pack(side="left", padx=5)
+        self.neuro_assistant_button.pack(side="left", padx=5)
         
         # Vídeo
         self.video_frame.pack(side="left", padx=10, pady=10)
@@ -646,6 +671,80 @@ class NeuroTranslatorGUI(ctk.CTk):
             
         # Implementar lógica de tradução ao vivo
         self.live_status_label.configure(text="Status: Tradução ao vivo ativa")
+    
+    def toggle_neuro_assistant(self):
+        """Ativar/desativar Assistente Neuro"""
+        try:
+            voice_assistant = self._lazy_init_voice_assistant()
+            
+            if not voice_assistant.is_listening:
+                # Ativar assistente
+                success = voice_assistant.start_listening()
+                if success:
+                    self.neuro_assistant_button.configure(
+                        text="🤖 Neuro Ativo",
+                        fg_color="green"
+                    )
+                    self.status_label.configure(text="🤖 Assistente Neuro ativo - Diga 'Vamos, Neuro!'")
+                    print("🤖 DEBUG: Assistente Neuro ativado")
+                else:
+                    messagebox.showerror("Erro", "Não foi possível ativar o Assistente Neuro")
+            else:
+                # Desativar assistente
+                voice_assistant.stop_listening()
+                self.neuro_assistant_button.configure(
+                    text="🤖 Assistente Neuro",
+                    fg_color="red"
+                )
+                self.status_label.configure(text="✅ Pronto para traduzir")
+                print("🤖 DEBUG: Assistente Neuro desativado")
+                
+        except Exception as e:
+            print(f"❌ DEBUG: Erro no Assistente Neuro: {e}")
+            messagebox.showerror("Erro", f"Erro no Assistente Neuro: {str(e)}")
+    
+    def _on_wake_word_detected(self, wake_word_text: str):
+        """Callback quando wake word é detectado"""
+        print(f"🎯 DEBUG: Wake word detectado: {wake_word_text}")
+        self.status_label.configure(text="🎯 Wake word detectado! Aguardando comando...")
+    
+    def _on_command_processed(self, command_text: str, processed_data: Dict[str, Any]):
+        """Callback quando comando é processado"""
+        print(f"🎤 DEBUG: Comando processado: {command_text}")
+        print(f"📊 DEBUG: Dados processados: {processed_data}")
+        
+        # Atualizar interface com o texto detectado
+        text_to_translate = processed_data.get("text_to_translate", "")
+        if text_to_translate:
+            self.input_text.delete("1.0", "end")
+            self.input_text.insert("1.0", text_to_translate)
+        
+        self.status_label.configure(text="🔄 Processando tradução...")
+    
+    def _on_translation_complete(self, translation_data: Dict[str, Any]):
+        """Callback quando tradução é concluída"""
+        print(f"✅ DEBUG: Tradução concluída: {translation_data}")
+        
+        # Atualizar interface com a tradução
+        translated_text = translation_data.get("translated", "")
+        if translated_text:
+            self.output_text.configure(state="normal")
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("1.0", translated_text)
+            self.output_text.configure(state="disabled")
+        
+        # Adicionar ao histórico
+        self.translation_history.append({
+            "original": translation_data.get("original", ""),
+            "translated": translated_text,
+            "source_lang": translation_data.get("source_lang", ""),
+            "target_lang": translation_data.get("target_lang", ""),
+            "confidence": translation_data.get("confidence", 0),
+            "timestamp": time.time(),
+            "method": "voice_assistant"
+        })
+        
+        self.status_label.configure(text="✅ Tradução concluída pelo Assistente Neuro")
     
     def update_video_frame(self, frame):
         """Atualizar frame de vídeo na interface"""
