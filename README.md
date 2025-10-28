@@ -29,7 +29,7 @@
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/web/assets/images/Logo_linkedin_vazada.png?raw=true" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
+    <img src="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/assets/images/Logo_linkedin_vazada.png" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
   </a>
 </div>
 
@@ -365,7 +365,7 @@ Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para
 
 • Nome: Flávio Henrique Barbosa
 • LinkedIn: [Flávio Henrique Barbosa | LinkedIn](https://linkedin.com/in/flaviohenriquehb777)
-• Email: [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
+• E-mail: [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
 
 ---
 
