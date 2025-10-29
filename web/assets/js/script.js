@@ -3,11 +3,6 @@
 
 class NeuroTranslatorWeb {
     constructor() {
-        this.camera = {
-            stream: null,
-            active: false
-        };
-        
         this.speech = {
             recognition: null,
             active: false,
@@ -41,12 +36,6 @@ class NeuroTranslatorWeb {
     }
     
     initElements() {
-        // Elementos da câmera
-        this.elements.videoElement = document.getElementById('videoElement');
-        this.elements.canvasElement = document.getElementById('canvasElement');
-        this.elements.toggleCamera = document.getElementById('toggleCamera');
-        this.elements.cameraStatus = document.getElementById('cameraStatus');
-        
         // Elementos de tradução
         this.elements.sourceLanguage = document.getElementById('sourceLanguage');
         this.elements.targetLanguage = document.getElementById('targetLanguage');
@@ -80,9 +69,6 @@ class NeuroTranslatorWeb {
     }
     
     initEventListeners() {
-        // Câmera
-        this.elements.toggleCamera.addEventListener('click', () => this.toggleCamera());
-        
         // Tradução
         this.elements.translateBtn.addEventListener('click', () => this.translateText());
         this.elements.swapLanguages.addEventListener('click', () => this.swapLanguages());
@@ -181,12 +167,6 @@ class NeuroTranslatorWeb {
             return false;
         }
         // Verificar suporte à câmera
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            console.warn('⚠️ Câmera não suportada neste navegador');
-            this.elements.toggleCamera.disabled = true;
-            this.elements.toggleCamera.innerHTML = '<i class="fas fa-video-slash"></i> Câmera não suportada';
-        }
-        
         // Verificar protocolo HTTPS para recursos que requerem segurança
         const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         
@@ -417,76 +397,6 @@ class NeuroTranslatorWeb {
                 document.getElementById('mobilePermissionHelp').remove();
             }
         }, 15000);
-    }
-    
-    async toggleCamera() {
-        if (this.camera.active) {
-            this.stopCamera();
-        } else {
-            await this.startCamera();
-        }
-    }
-    
-    async startCamera() {
-        try {
-            this.elements.cameraStatus.textContent = '📷 Câmera: Iniciando...';
-            
-            const constraints = {
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    facingMode: 'user'
-                }
-            };
-            
-            this.camera.stream = await navigator.mediaDevices.getUserMedia(constraints);
-            this.elements.videoElement.srcObject = this.camera.stream;
-            
-            this.camera.active = true;
-            this.elements.toggleCamera.innerHTML = '<i class="fas fa-video-slash"></i> Desativar Câmera';
-            this.elements.toggleCamera.classList.add('active');
-            this.elements.cameraStatus.textContent = '📷 Câmera: Ativa';
-            
-            // Ocultar overlay
-            const overlay = document.querySelector('.camera-overlay');
-            if (overlay) overlay.classList.add('hidden');
-            
-            console.log('✅ Câmera ativada com sucesso');
-            
-        } catch (error) {
-            console.error('❌ Erro ao ativar câmera:', error);
-            this.elements.cameraStatus.textContent = '📷 Câmera: Erro de acesso';
-            
-            let errorMsg = 'Erro desconhecido';
-            if (error.name === 'NotAllowedError') {
-                errorMsg = 'Permissão negada. Permita o acesso à câmera.';
-            } else if (error.name === 'NotFoundError') {
-                errorMsg = 'Câmera não encontrada.';
-            } else if (error.name === 'NotReadableError') {
-                errorMsg = 'Câmera em uso por outro aplicativo.';
-            }
-            
-            alert(`Erro ao acessar câmera: ${errorMsg}`);
-        }
-    }
-    
-    stopCamera() {
-        if (this.camera.stream) {
-            this.camera.stream.getTracks().forEach(track => track.stop());
-            this.camera.stream = null;
-        }
-        
-        this.elements.videoElement.srcObject = null;
-        this.camera.active = false;
-        this.elements.toggleCamera.innerHTML = '<i class="fas fa-video"></i> Ativar Câmera';
-        this.elements.toggleCamera.classList.remove('active');
-        this.elements.cameraStatus.textContent = '📷 Câmera: Desativada';
-        
-        // Mostrar overlay
-        const overlay = document.querySelector('.camera-overlay');
-        if (overlay) overlay.classList.remove('hidden');
-        
-        console.log('📷 Câmera desativada');
     }
     
     toggleSpeech() {
@@ -752,10 +662,7 @@ class NeuroTranslatorWeb {
     
     startLiveMode() {
         console.log('🔴 Modo ao vivo ativado');
-        // Ativar câmera e fala automaticamente
-        if (!this.camera.active) {
-            this.startCamera();
-        }
+        // Ativar fala automaticamente
         if (!this.speech.active && this.speech.supported) {
             this.startSpeech();
         }
@@ -763,7 +670,7 @@ class NeuroTranslatorWeb {
     
     stopLiveMode() {
         console.log('⏹️ Modo ao vivo desativado');
-        // Manter câmera e fala como estão, apenas desativar modo automático
+        // Manter fala como está, apenas desativar modo automático
     }
     
     handleKeyboard(event) {

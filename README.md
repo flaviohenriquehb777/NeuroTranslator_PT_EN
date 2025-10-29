@@ -11,7 +11,7 @@
 ## Sumário
 
 - [Visão Geral](#visão-geral)
-- [Versão Web - Tema Escuro Moderno](#versão-web---tema-escuro-moderno)
+- [Versão Web - Interface Moderna](#versão-web---interface-moderna)
 - [Principais Funcionalidades](#principais-funcionalidades)
 - [Arquitetura do Sistema](#arquitetura-do-sistema)
 - [Estrutura Completa do Projeto](#estrutura-completa-do-projeto)
@@ -29,7 +29,7 @@
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png" alt="NeuroTranslator Web App - Tema Escuro Moderno com Glass Morphism" width="600" />
+    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App - Interface Moderna de Tradução" width="600" />
   </a>
 </div>
 
@@ -39,22 +39,22 @@
 
 ## 🌟 Visão Geral
 
-O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning (CNN, RNN, Transformers) e Processamento de Linguagem Natural (NLP) para tradução bidirecional entre Português e Inglês. O sistema oferece uma interface moderna com reconhecimento de voz, síntese de fala, captura de vídeo e legendas em tempo real.
+O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning (CNN, RNN, Transformers) e Processamento de Linguagem Natural (NLP) para tradução bidirecional entre Português e Inglês. O sistema oferece uma interface moderna com reconhecimento de voz, síntese de fala e tradução de texto otimizada.
 
-## 🌐 Versão Web - Tema Escuro Moderno
+## 🌐 Versão Web - Interface Moderna
 
-### 🎨 **NOVA INTERFACE 2025** - Tema Escuro com Glass Morphism
+### 🎨 **NOVA INTERFACE 2025** - Design Focado em Tradução
 
-A versão web foi completamente redesenhada com um **tema escuro ultra-moderno** que inclui:
+A versão web foi otimizada com uma **interface limpa e moderna** que inclui:
 
-#### 🌙 **Design Escuro Profissional**
+#### 🌙 **Design Profissional**
 - **Background Ultra-Escuro**: Gradientes suaves de #0a0a0a para máximo contraste
 - **Glass Morphism**: Efeito de vidro translúcido em todas as seções
 - **Backdrop Blur**: Desfoque de 20px para profundidade visual
 - **Sombras Modernas**: Sombras suaves e profundas para elevação
 
 #### ✨ **Elementos Visuais Modernos**
-- **Header Compacto**: Faixa introdutória 50% mais estreita
+- **Header Compacto**: Faixa introdutória otimizada
 - **Logo Redimensionada**: Tamanho otimizado (80px) para melhor proporção
 - **Bordas Translúcidas**: Bordas com transparência sutil
 - **Animações Fluidas**: Transições suaves e efeitos hover 3D
@@ -62,11 +62,10 @@ A versão web foi completamente redesenhada com um **tema escuro ultra-moderno**
 #### 🎯 **Funcionalidades da Versão Web**
 - 📱 **Design Responsivo**: Otimizado para desktop, tablet e smartphone
 - 🎤 **Reconhecimento de Voz**: Web Speech API para captura de áudio em tempo real
-- 📹 **Captura de Câmera**: Acesso à câmera via WebRTC para funcionalidades visuais
 - 🔄 **Tradução em Tempo Real**: Integração com APIs de tradução modernas
 - 💾 **Histórico Local**: Armazenamento das traduções no navegador com persistência
 - ⚡ **Zero Instalação**: Funciona em qualquer navegador moderno sem downloads
-- 🔧 **Compatibilidade Samsung**: Otimizações específicas para Samsung Internet Browser
+- 🔧 **Interface Focada**: Layout otimizado para tradução de texto e voz
 
 ## ✨ Principais Funcionalidades
 
@@ -74,8 +73,7 @@ A versão web foi completamente redesenhada com um **tema escuro ultra-moderno**
 - 🌐 **Tradução Bidirecional**: Português ↔ Inglês usando modelos neurais avançados
 - 🎤 **Reconhecimento de Voz**: Captura e processa fala em tempo real com alta precisão
 - 🔊 **Síntese de Fala**: Converte texto traduzido em áudio natural (TTS)
-- 📹 **Captura de Vídeo**: Interface com câmera integrada e detecção facial
-- 📝 **Legendas Inteligentes**: Sistema de overlay para meetings (Teams, Zoom, etc.)
+- 📝 **Interface Focada**: Sistema otimizado para tradução de texto e voz
 
 ### 🎨 **Interface e UX**
 - 🌙 **Tema Escuro Moderno**: Interface com glass morphism e backdrop blur
@@ -88,7 +86,7 @@ A versão web foi completamente redesenhada com um **tema escuro ultra-moderno**
 - **Latência Ultra-Baixa**: <400ms para tradução completa
 - **Precisão Elevada**: >95% de acurácia em contextos gerais
 - **Processamento Local**: Privacidade garantida, sem envio de dados
-- **Multi-Modal**: Integração áudio + vídeo + texto
+- **Interface Otimizada**: Integração áudio + texto focada em produtividade
 - **Escalável**: Arquitetura modular e extensível
 
 ## 🏗️ Arquitetura do Sistema

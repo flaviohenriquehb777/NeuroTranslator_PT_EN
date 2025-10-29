@@ -15,7 +15,7 @@
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="NeuroTranslator PT-EN - Tradução Neural em Tempo Real">
     <meta property="og:description" content="Sistema avançado de tradução automática em tempo real com Deep Learning, reconhecimento de voz e interface moderna.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg">
     <meta property="og:url" content="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="NeuroTranslator PT-EN">
@@ -24,7 +24,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NeuroTranslator PT-EN - Tradução Neural em Tempo Real">
     <meta name="twitter:description" content="Sistema avançado de tradução automática em tempo real com Deep Learning, reconhecimento de voz e interface moderna.">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/Logo_linkedin_vazada.png">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg">
     
     <!-- Cache Control Meta Tags -->
     <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
@@ -58,27 +58,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Camera Section -->
-            <section class="camera-section">
-                <div class="camera-container">
-                    <video id="videoElement" autoplay muted></video>
-                    <canvas id="canvasElement" style="display: none;"></canvas>
-                    <div class="camera-overlay">
-                        <button id="toggleCamera" class="btn btn-camera">
-                            <i class="fas fa-camera"></i>
-                            <span>Ativar Câmera</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="camera-status">
-                    <span id="cameraStatus">📷 Câmera: Desativada</span>
-                </div>
-            </section>
-
-            <!-- Translation Section -->
-            <section class="translation-section">
+        <!-- Translation Section -->
+        <section class="translation-section">
                 <div class="translation-container">
                     <!-- Language Selection -->
                     <div class="language-selector">
@@ -186,20 +167,19 @@
                 </div>
             </section>
 
-            <!-- History Section -->
-            <section class="history-section">
-                <div class="history-header">
-                    <h3>📋 Histórico de Traduções</h3>
-                    <button id="clearHistory" class="btn btn-clear-history">
-                        <i class="fas fa-trash-alt"></i>
-                        Limpar
-                    </button>
-                </div>
-                <div id="historyContainer" class="history-container">
-                    <p class="no-history">Nenhuma tradução realizada ainda.</p>
-                </div>
-            </section>
-        </main>
+        <!-- History Section -->
+        <section class="history-section">
+            <div class="history-header">
+                <h3>📋 Histórico de Traduções</h3>
+                <button id="clearHistory" class="btn btn-clear-history">
+                    <i class="fas fa-trash-alt"></i>
+                    Limpar
+                </button>
+            </div>
+            <div id="historyContainer" class="history-container">
+                <p class="no-history">Nenhuma tradução realizada ainda.</p>
+            </div>
+        </section>
 
         <!-- Footer -->
         <footer class="footer">
