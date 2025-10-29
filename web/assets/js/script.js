@@ -109,6 +109,20 @@ class NeuroTranslatorWeb {
         this.elements.copyTranslation.addEventListener('click', () => this.copyTranslation());
         this.elements.clearHistory.addEventListener('click', () => this.clearHistory());
         
+        // Controles de voz
+        const repeatSpeechBtn = document.getElementById('repeatSpeech');
+        if (repeatSpeechBtn) {
+            repeatSpeechBtn.addEventListener('click', () => this.repeatLastTranslation());
+        }
+        
+        const voiceGenderSelect = document.getElementById('voiceGender');
+        if (voiceGenderSelect) {
+            voiceGenderSelect.addEventListener('change', (e) => {
+                console.log('🎤 Gênero de voz alterado para:', e.target.value);
+                this.saveSettings();
+            });
+        }
+        
         // Configurações
         this.elements.autoTranslate.addEventListener('change', (e) => {
             this.translation.autoTranslate = e.target.checked;
@@ -797,12 +811,14 @@ class NeuroTranslatorWeb {
     }
     
     saveSettings() {
+        const voiceGenderSelect = document.getElementById('voiceGender');
         const settings = {
             autoTranslate: this.translation.autoTranslate,
             liveMode: this.translation.liveMode,
             history: this.translation.history,
             sourceLanguage: this.elements.sourceLanguage.value,
-            targetLanguage: this.elements.targetLanguage.value
+            targetLanguage: this.elements.targetLanguage.value,
+            voiceGender: voiceGenderSelect ? voiceGenderSelect.value : 'auto'
         };
         
         localStorage.setItem('neurotranslator-settings', JSON.stringify(settings));
@@ -822,6 +838,12 @@ class NeuroTranslatorWeb {
                 }
                 if (this.elements.liveMode) {
                     this.elements.liveMode.checked = this.translation.liveMode;
+                }
+                
+                // Aplicar configuração de gênero de voz
+                const voiceGenderSelect = document.getElementById('voiceGender');
+                if (voiceGenderSelect && parsed.voiceGender) {
+                    voiceGenderSelect.value = parsed.voiceGender;
                 }
                 
                 console.log('⚙️ Configurações carregadas:', parsed);
@@ -1202,7 +1224,7 @@ class NeuroTranslatorWeb {
         return 'pt'; // Default para português
     }
     
-    speakTranslation(text, language) {
+    speakTranslation(text, language, forceGender = null) {
         if ('speechSynthesis' in window) {
             // Parar qualquer síntese anterior
             speechSynthesis.cancel();
@@ -1219,37 +1241,107 @@ class NeuroTranslatorWeb {
             
             utterance.lang = voiceLangMap[language] || 'pt-BR';
             utterance.rate = 0.9;
-            utterance.pitch = 1;
             utterance.volume = 1;
             
-            // Tentar encontrar uma voz específica para o idioma
+            // Obter preferência de gênero de voz
+            const voiceGenderSelect = document.getElementById('voiceGender');
+            const selectedGender = forceGender || (voiceGenderSelect ? voiceGenderSelect.value : 'auto');
+            
+            // Tentar encontrar uma voz específica para o idioma e gênero
             const voices = speechSynthesis.getVoices();
             const targetLang = voiceLangMap[language] || 'pt-BR';
             
-            // Procurar voz nativa do idioma
-            const nativeVoice = voices.find(voice => 
-                voice.lang === targetLang || voice.lang.startsWith(language)
-            );
+            let selectedVoice = null;
             
-            if (nativeVoice) {
-                utterance.voice = nativeVoice;
-                console.log('🎯 Voz selecionada:', nativeVoice.name, nativeVoice.lang);
+            if (selectedGender === 'male') {
+                // Procurar vozes masculinas
+                selectedVoice = voices.find(voice => 
+                    (voice.lang === targetLang || voice.lang.startsWith(language)) &&
+                    (voice.name.toLowerCase().includes('male') || 
+                     voice.name.toLowerCase().includes('masculin') ||
+                     voice.name.toLowerCase().includes('homem') ||
+                     voice.name.toLowerCase().includes('ricardo') ||
+                     voice.name.toLowerCase().includes('felipe') ||
+                     voice.name.toLowerCase().includes('daniel') ||
+                     voice.name.toLowerCase().includes('carlos'))
+                );
+                utterance.pitch = 0.8; // Tom mais grave para voz masculina
+            } else if (selectedGender === 'female') {
+                // Procurar vozes femininas
+                selectedVoice = voices.find(voice => 
+                    (voice.lang === targetLang || voice.lang.startsWith(language)) &&
+                    (voice.name.toLowerCase().includes('female') || 
+                     voice.name.toLowerCase().includes('feminin') ||
+                     voice.name.toLowerCase().includes('mulher') ||
+                     voice.name.toLowerCase().includes('maria') ||
+                     voice.name.toLowerCase().includes('ana') ||
+                     voice.name.toLowerCase().includes('lucia') ||
+                     voice.name.toLowerCase().includes('fernanda') ||
+                     voice.name.toLowerCase().includes('beatriz'))
+                );
+                utterance.pitch = 1.2; // Tom mais agudo para voz feminina
+            } else {
+                // Modo automático - usar primeira voz disponível para o idioma
+                selectedVoice = voices.find(voice => 
+                    voice.lang === targetLang || voice.lang.startsWith(language)
+                );
+                utterance.pitch = 1; // Tom neutro
             }
+            
+            // Fallback para qualquer voz do idioma se não encontrar específica
+            if (!selectedVoice) {
+                selectedVoice = voices.find(voice => 
+                    voice.lang === targetLang || voice.lang.startsWith(language)
+                );
+            }
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                console.log('🎯 Voz selecionada:', selectedVoice.name, selectedVoice.lang, `(${selectedGender})`);
+            }
+            
+            // Armazenar última tradução para repetição
+            this.lastTranslation = {
+                text: text,
+                language: language,
+                gender: selectedGender
+            };
             
             // Eventos de controle
             utterance.onstart = () => {
                 console.log('🔊 Iniciando síntese de voz:', text);
                 this.elements.speechStatus.textContent = '🔊 Falando tradução...';
+                
+                // Desabilitar botão de repetir durante a fala
+                const repeatBtn = document.getElementById('repeatSpeech');
+                if (repeatBtn) {
+                    repeatBtn.disabled = true;
+                    repeatBtn.style.opacity = '0.6';
+                }
             };
             
             utterance.onend = () => {
                 console.log('✅ Síntese de voz concluída');
                 this.elements.speechStatus.textContent = '🎤 Reconhecimento: Pronto';
+                
+                // Reabilitar botão de repetir
+                const repeatBtn = document.getElementById('repeatSpeech');
+                if (repeatBtn) {
+                    repeatBtn.disabled = false;
+                    repeatBtn.style.opacity = '1';
+                }
             };
             
             utterance.onerror = (event) => {
                 console.error('❌ Erro na síntese de voz:', event.error);
                 this.elements.speechStatus.textContent = '❌ Erro na síntese de voz';
+                
+                // Reabilitar botão de repetir em caso de erro
+                const repeatBtn = document.getElementById('repeatSpeech');
+                if (repeatBtn) {
+                    repeatBtn.disabled = false;
+                    repeatBtn.style.opacity = '1';
+                }
             };
             
             console.log('🔊 Falando tradução:', text);
@@ -1257,6 +1349,21 @@ class NeuroTranslatorWeb {
         } else {
             console.warn('⚠️ Speech Synthesis não suportado');
             this.elements.speechStatus.textContent = '⚠️ Síntese de voz não suportada';
+        }
+    }
+    
+    // Método para repetir a última tradução
+    repeatLastTranslation() {
+        if (this.lastTranslation && this.lastTranslation.text) {
+            console.log('🔄 Repetindo última tradução');
+            this.speakTranslation(
+                this.lastTranslation.text, 
+                this.lastTranslation.language, 
+                this.lastTranslation.gender
+            );
+        } else {
+            console.warn('⚠️ Nenhuma tradução disponível para repetir');
+            this.elements.speechStatus.textContent = '⚠️ Nenhuma tradução para repetir';
         }
     }
     

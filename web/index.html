@@ -143,6 +143,10 @@
                                     <button id="copyTranslation" class="btn btn-copy">
                                         <i class="fas fa-copy"></i>
                                     </button>
+                                    <button id="repeatSpeech" class="btn btn-speech" title="Repetir leitura da tradução">
+                                        <i class="fas fa-volume-up"></i>
+                                        <span>Repetir</span>
+                                    </button>
                                 </div>
                             </div>
                             <textarea 
@@ -170,6 +174,14 @@
                             <span class="checkmark"></span>
                             Modo ao vivo (câmera + fala)
                         </label>
+                        <div class="voice-gender-selector">
+                            <label for="voiceGender">🎤 Voz para tradução:</label>
+                            <select id="voiceGender" class="voice-select">
+                                <option value="auto">🤖 Automática</option>
+                                <option value="male">👨 Masculina</option>
+                                <option value="female">👩 Feminina</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </section>
