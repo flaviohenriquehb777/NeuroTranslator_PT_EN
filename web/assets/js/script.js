@@ -65,7 +65,6 @@ class NeuroTranslatorWeb {
         // Elementos de status
         this.elements.translationStatus = document.getElementById('translationStatus');
         this.elements.processingTime = document.getElementById('processingTime');
-        this.elements.loadingOverlay = document.getElementById('loadingOverlay');
     }
     
     initEventListeners() {
@@ -458,7 +457,6 @@ class NeuroTranslatorWeb {
             return;
         }
         
-        this.showLoading(true);
         this.elements.translationStatus.textContent = 'Traduzindo...';
         
         const startTime = Date.now();
@@ -483,8 +481,6 @@ class NeuroTranslatorWeb {
             this.elements.translationStatus.textContent = 'Erro na tradução';
             this.elements.targetText.value = 'Erro: Não foi possível traduzir o texto.';
             alert('Erro na tradução. Verifique sua conexão com a internet.');
-        } finally {
-            this.showLoading(false);
         }
     }
     
@@ -515,7 +511,6 @@ class NeuroTranslatorWeb {
             return;
         }
         
-        this.showLoading(true);
         this.elements.translationStatus.textContent = 'Traduzindo...';
         
         const startTime = Date.now();
@@ -542,8 +537,6 @@ class NeuroTranslatorWeb {
             console.error('❌ Erro na tradução:', error);
             this.elements.translationStatus.textContent = 'Erro na tradução';
             this.elements.targetText.value = 'Erro: Não foi possível traduzir o texto.';
-        } finally {
-            this.showLoading(false);
         }
     }
     
@@ -698,7 +691,9 @@ class NeuroTranslatorWeb {
             'pt': 'pt-BR',
             'en': 'en-US',
             'es': 'es-ES',
-            'fr': 'fr-FR'
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'zh': 'zh-CN'
         };
         return codes[lang] || 'pt-BR';
     }
@@ -708,13 +703,11 @@ class NeuroTranslatorWeb {
             'pt': '🇧🇷 Português',
             'en': '🇺🇸 Inglês',
             'es': '🇪🇸 Espanhol',
-            'fr': '🇫🇷 Francês'
+            'fr': '🇫🇷 Francês',
+            'de': '🇩🇪 Alemão',
+            'zh': '🇨🇳 Chinês'
         };
         return names[code] || code;
-    }
-    
-    showLoading(show) {
-        this.elements.loadingOverlay.style.display = show ? 'flex' : 'none';
     }
     
     saveSettings() {
@@ -1071,7 +1064,11 @@ class NeuroTranslatorWeb {
             'espanhol': 'es',
             'spanish': 'es',
             'francês': 'fr',
-            'french': 'fr'
+            'french': 'fr',
+            'alemão': 'de',
+            'german': 'de',
+            'chinês': 'zh',
+            'chinese': 'zh'
         };
         
         return langMap[langName.toLowerCase()] || null;
@@ -1131,6 +1128,80 @@ class NeuroTranslatorWeb {
         return 'pt'; // Default para português
     }
     
+    // Sistema de vozes fixas para garantir consistência entre sistemas
+    getFixedVoice(language, gender) {
+        const voices = speechSynthesis.getVoices();
+        
+        // Configuração de vozes fixas por idioma e gênero
+        const fixedVoices = {
+            'pt': {
+                'male': ['Microsoft Daniel - Portuguese (Brazil)', 'Google português do Brasil', 'Daniel', 'Ricardo'],
+                'female': ['Microsoft Maria - Portuguese (Brazil)', 'Google português do Brasil', 'Maria', 'Fernanda', 'Luciana']
+            },
+            'en': {
+                'male': ['Microsoft David - English (United States)', 'Google US English', 'David', 'Mark', 'Alex'],
+                'female': ['Microsoft Zira - English (United States)', 'Google US English', 'Zira', 'Samantha', 'Victoria']
+            },
+            'es': {
+                'male': ['Microsoft Pablo - Spanish (Spain)', 'Google español', 'Pablo', 'Diego', 'Carlos'],
+                'female': ['Microsoft Helena - Spanish (Spain)', 'Google español', 'Helena', 'Paloma', 'Monica']
+            },
+            'fr': {
+                'male': ['Microsoft Paul - French (France)', 'Google français', 'Paul', 'Thomas'],
+                'female': ['Microsoft Hortense - French (France)', 'Google français', 'Hortense', 'Amelie']
+            },
+            'de': {
+                'male': ['Microsoft Stefan - German (Germany)', 'Google Deutsch', 'Stefan', 'Hans'],
+                'female': ['Microsoft Hedda - German (Germany)', 'Google Deutsch', 'Hedda', 'Anna']
+            },
+            'zh': {
+                'male': ['Microsoft Kangkang - Chinese (Simplified, PRC)', 'Google 普通话（中国大陆）', 'Kangkang'],
+                'female': ['Microsoft Yaoyao - Chinese (Simplified, PRC)', 'Google 普通话（中国大陆）', 'Yaoyao', 'Ting-Ting']
+            }
+        };
+
+        const targetLang = this.getLanguageCode(language);
+        const voiceOptions = fixedVoices[language];
+        
+        if (!voiceOptions) {
+            return null;
+        }
+
+        const genderVoices = voiceOptions[gender] || voiceOptions['female'];
+        
+        // Tentar encontrar uma voz específica da lista
+        for (const voiceName of genderVoices) {
+            const voice = voices.find(v => 
+                v.name.includes(voiceName) || 
+                (v.lang === targetLang && v.name.toLowerCase().includes(voiceName.toLowerCase()))
+            );
+            if (voice) {
+                return voice;
+            }
+        }
+
+        // Fallback: procurar qualquer voz do idioma com indicadores de gênero
+        const genderKeywords = {
+            'male': ['male', 'masculin', 'homem', 'man', 'hombre', 'homme', 'mann', '男'],
+            'female': ['female', 'feminin', 'mulher', 'woman', 'mujer', 'femme', 'frau', '女']
+        };
+
+        const keywords = genderKeywords[gender] || genderKeywords['female'];
+        
+        for (const keyword of keywords) {
+            const voice = voices.find(v => 
+                (v.lang === targetLang || v.lang.startsWith(language)) &&
+                v.name.toLowerCase().includes(keyword)
+            );
+            if (voice) {
+                return voice;
+            }
+        }
+
+        // Último fallback: primeira voz disponível do idioma
+        return voices.find(v => v.lang === targetLang || v.lang.startsWith(language));
+    }
+
     speakTranslation(text, language, forceGender = null) {
         if ('speechSynthesis' in window) {
             // Parar qualquer síntese anterior
@@ -1143,7 +1214,9 @@ class NeuroTranslatorWeb {
                 'pt': 'pt-BR',
                 'en': 'en-US',
                 'es': 'es-ES',
-                'fr': 'fr-FR'
+                'fr': 'fr-FR',
+                'de': 'de-DE',
+                'zh': 'zh-CN'
             };
             
             utterance.lang = voiceLangMap[language] || 'pt-BR';
@@ -1154,57 +1227,24 @@ class NeuroTranslatorWeb {
             const voiceGenderSelect = document.getElementById('voiceGender');
             const selectedGender = forceGender || (voiceGenderSelect ? voiceGenderSelect.value : 'auto');
             
-            // Tentar encontrar uma voz específica para o idioma e gênero
-            const voices = speechSynthesis.getVoices();
-            const targetLang = voiceLangMap[language] || 'pt-BR';
-            
+            // Usar sistema de vozes fixas
             let selectedVoice = null;
             
-            if (selectedGender === 'male') {
-                // Procurar vozes masculinas
-                selectedVoice = voices.find(voice => 
-                    (voice.lang === targetLang || voice.lang.startsWith(language)) &&
-                    (voice.name.toLowerCase().includes('male') || 
-                     voice.name.toLowerCase().includes('masculin') ||
-                     voice.name.toLowerCase().includes('homem') ||
-                     voice.name.toLowerCase().includes('ricardo') ||
-                     voice.name.toLowerCase().includes('felipe') ||
-                     voice.name.toLowerCase().includes('daniel') ||
-                     voice.name.toLowerCase().includes('carlos'))
-                );
-                utterance.pitch = 0.8; // Tom mais grave para voz masculina
-            } else if (selectedGender === 'female') {
-                // Procurar vozes femininas
-                selectedVoice = voices.find(voice => 
-                    (voice.lang === targetLang || voice.lang.startsWith(language)) &&
-                    (voice.name.toLowerCase().includes('female') || 
-                     voice.name.toLowerCase().includes('feminin') ||
-                     voice.name.toLowerCase().includes('mulher') ||
-                     voice.name.toLowerCase().includes('maria') ||
-                     voice.name.toLowerCase().includes('ana') ||
-                     voice.name.toLowerCase().includes('lucia') ||
-                     voice.name.toLowerCase().includes('fernanda') ||
-                     voice.name.toLowerCase().includes('beatriz'))
-                );
-                utterance.pitch = 1.2; // Tom mais agudo para voz feminina
+            if (selectedGender === 'auto') {
+                // No modo automático, alternar entre masculino e feminino
+                const autoGender = Math.random() > 0.5 ? 'male' : 'female';
+                selectedVoice = this.getFixedVoice(language, autoGender);
+                utterance.pitch = autoGender === 'male' ? 0.8 : 1.2;
             } else {
-                // Modo automático - usar primeira voz disponível para o idioma
-                selectedVoice = voices.find(voice => 
-                    voice.lang === targetLang || voice.lang.startsWith(language)
-                );
-                utterance.pitch = 1; // Tom neutro
-            }
-            
-            // Fallback para qualquer voz do idioma se não encontrar específica
-            if (!selectedVoice) {
-                selectedVoice = voices.find(voice => 
-                    voice.lang === targetLang || voice.lang.startsWith(language)
-                );
+                selectedVoice = this.getFixedVoice(language, selectedGender);
+                utterance.pitch = selectedGender === 'male' ? 0.8 : 1.2;
             }
             
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
-                console.log('🎯 Voz selecionada:', selectedVoice.name, selectedVoice.lang, `(${selectedGender})`);
+                console.log('🎯 Voz fixa selecionada:', selectedVoice.name, selectedVoice.lang, `(${selectedGender})`);
+            } else {
+                console.warn('⚠️ Nenhuma voz encontrada para', language, selectedGender);
             }
             
             // Armazenar última tradução para repetição

@@ -4,378 +4,245 @@
   
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![Version](https://img.shields.io/badge/Version-2.0-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
+[![Version](https://img.shields.io/badge/Version-3.0-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
 
 </div>
 
-## Sumário
+## 📋 Sumário
 
-- [Visão Geral](#visão-geral)
-- [Versão Web - Interface Moderna](#versão-web---interface-moderna)
-- [Principais Funcionalidades](#principais-funcionalidades)
-- [Arquitetura do Sistema](#arquitetura-do-sistema)
-- [Estrutura Completa do Projeto](#estrutura-completa-do-projeto)
-- [Instalação e Configuração](#instalação-e-configuração)
-- [Como Usar](#como-usar)
-- [Design e Interface](#design-e-interface)
-- [Desenvolvimento e Pesquisa](#desenvolvimento-e-pesquisa)
-- [Cronograma de Desenvolvimento](#cronograma-de-desenvolvimento)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
-- [Agradecimentos](#agradecimentos)
-- [Contato e Suporte](#contato-e-suporte)
+- [Visão Geral](#-visão-geral)
+- [Aplicação Web](#-aplicação-web)
+- [Principais Funcionalidades](#-principais-funcionalidades)
+- [Arquitetura do Sistema](#️-arquitetura-do-sistema)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Instalação e Uso](#-instalação-e-uso)
+- [Desenvolvimento](#-desenvolvimento)
+- [Contribuição](#-contribuição)
+- [Licença](#-licença)
 
 ---
 
 <div align="center">
   <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App - Interface Moderna de Tradução" width="600" />
+    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App" width="600" />
   </a>
 </div>
 
 <div align="center">
-  <strong>🚀 <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">Acesse a Aplicação Web</a> - Clique na imagem ou no link!</strong>
+  <strong>🚀 <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">Acesse a Aplicação Web</a></strong>
 </div>
 
 ## 🌟 Visão Geral
 
-O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning (CNN, RNN, Transformers) e Processamento de Linguagem Natural (NLP) para tradução bidirecional entre Português e Inglês. O sistema oferece uma interface moderna com reconhecimento de voz, síntese de fala e tradução de texto otimizada.
+O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em tempo real que utiliza técnicas de Deep Learning e Processamento de Linguagem Natural para tradução multilíngue. O sistema oferece uma interface web moderna com reconhecimento de voz, síntese de fala e tradução de texto otimizada.
 
-## 🌐 Versão Web - Interface Moderna
+### 🎯 **Idiomas Suportados**
+- 🇧🇷 **Português** (Brasil)
+- 🇺🇸 **Inglês** (Estados Unidos)
+- 🇪🇸 **Espanhol** (Espanha)
+- 🇫🇷 **Francês** (França)
+- 🇩🇪 **Alemão** (Alemanha)
+- 🇨🇳 **Chinês** (Mandarim)
 
-### 🎨 **NOVA INTERFACE 2025** - Design Focado em Tradução
+## 🌐 Aplicação Web
 
-A versão web foi otimizada com uma **interface limpa e moderna** que inclui:
+### 🎨 **Interface Moderna 2025**
 
-#### 🌙 **Design Profissional**
-- **Background Ultra-Escuro**: Gradientes suaves de #0a0a0a para máximo contraste
-- **Glass Morphism**: Efeito de vidro translúcido em todas as seções
-- **Backdrop Blur**: Desfoque de 20px para profundidade visual
-- **Sombras Modernas**: Sombras suaves e profundas para elevação
+A aplicação web apresenta um design profissional e moderno:
 
-#### ✨ **Elementos Visuais Modernos**
-- **Header Compacto**: Faixa introdutória otimizada
-- **Logo Redimensionada**: Tamanho otimizado (80px) para melhor proporção
-- **Bordas Translúcidas**: Bordas com transparência sutil
-- **Animações Fluidas**: Transições suaves e efeitos hover 3D
+- **🌙 Tema Escuro**: Interface elegante com gradientes suaves
+- **✨ Glass Morphism**: Efeitos de vidro translúcido e backdrop blur
+- **📱 Design Responsivo**: Otimizado para desktop, tablet e mobile
+- **⚡ Performance**: Carregamento rápido e interações fluidas
 
-#### 🎯 **Funcionalidades da Versão Web**
-- 📱 **Design Responsivo**: Otimizado para desktop, tablet e smartphone
-- 🎤 **Reconhecimento de Voz**: Web Speech API para captura de áudio em tempo real
-- 🔄 **Tradução em Tempo Real**: Integração com APIs de tradução modernas
-- 💾 **Histórico Local**: Armazenamento das traduções no navegador com persistência
-- ⚡ **Zero Instalação**: Funciona em qualquer navegador moderno sem downloads
-- 🔧 **Interface Focada**: Layout otimizado para tradução de texto e voz
+### 🔧 **Funcionalidades Web**
+
+- 🎤 **Reconhecimento de Voz**: Captura de áudio em tempo real
+- 🔊 **Síntese de Fala**: Vozes masculinas e femininas para cada idioma
+- 💾 **Histórico Local**: Armazenamento das traduções no navegador
+- 🔄 **Tradução Bidirecional**: Suporte completo para todos os idiomas
+- 🎯 **Interface Focada**: Layout otimizado para produtividade
 
 ## ✨ Principais Funcionalidades
 
 ### 🎯 **Core Features**
-- 🌐 **Tradução Bidirecional**: Português ↔ Inglês usando modelos neurais avançados
-- 🎤 **Reconhecimento de Voz**: Captura e processa fala em tempo real com alta precisão
-- 🔊 **Síntese de Fala**: Converte texto traduzido em áudio natural (TTS)
-- 📝 **Interface Focada**: Sistema otimizado para tradução de texto e voz
-
-### 🎨 **Interface e UX**
-- 🌙 **Tema Escuro Moderno**: Interface com glass morphism e backdrop blur
-- ♿ **Acessibilidade**: Suporte completo para usuários com necessidades especiais
-- 📊 **Métricas em Tempo Real**: Monitoramento de performance e qualidade
-- 💾 **Histórico Persistente**: Armazenamento local das traduções
-- 🎯 **UI Responsiva**: Adaptável a diferentes tamanhos de tela
+- 🌐 **Tradução Multilíngue**: Suporte para 6 idiomas principais
+- 🎤 **Reconhecimento de Voz**: Web Speech API com alta precisão
+- 🔊 **Síntese de Fala**: Sistema de vozes fixas para consistência
+- 📝 **Interface Otimizada**: Design focado em tradução eficiente
 
 ### 🏆 **Diferenciais Técnicos**
-- **Latência Ultra-Baixa**: <400ms para tradução completa
-- **Precisão Elevada**: >95% de acurácia em contextos gerais
-- **Processamento Local**: Privacidade garantida, sem envio de dados
-- **Interface Otimizada**: Integração áudio + texto focada em produtividade
-- **Escalável**: Arquitetura modular e extensível
+- **Latência Baixa**: Tradução rápida e responsiva
+- **Vozes Consistentes**: Sistema de vozes fixas por idioma e gênero
+- **Sem Overlay**: Interface limpa sem elementos desnecessários
+- **Privacidade**: Processamento local quando possível
 
 ## 🏗️ Arquitetura do Sistema
 
-### 🧠 Modelos de Machine Learning
-- **CNN (Convolutional Neural Networks)**: Processamento de features de áudio e vídeo
-- **RNN/LSTM/GRU**: Modelagem sequencial para tradução contextual
-- **Transformers**: Arquitetura attention-based para tradução neural de alta qualidade
-- **ASR (Automatic Speech Recognition)**: Reconhecimento de fala multilíngue
-- **TTS (Text-to-Speech)**: Síntese de voz natural e expressiva
-- **Computer Vision**: Detecção facial e processamento de vídeo
-
-### 💻 Stack Tecnológico Completo
-
-#### **Backend**
-- **Python 3.8+**: Linguagem principal
-- **PyTorch**: Framework de deep learning
-- **TensorFlow**: Modelos complementares
-- **Transformers (Hugging Face)**: Modelos pré-treinados
+### 💻 **Stack Tecnológico**
 
 #### **Frontend Web**
 - **HTML5**: Estrutura semântica moderna
 - **CSS3**: Estilização avançada com glass morphism
-- **JavaScript ES6+**: Lógica interativa
-- **Web APIs**: Speech Recognition, WebRTC, MediaDevices
+- **JavaScript ES6+**: Lógica interativa e APIs modernas
+- **Web APIs**: Speech Recognition, Speech Synthesis, WebRTC
 
-#### **Audio & Vision Processing**
-- **LibROSA**: Análise de áudio
-- **PyAudio**: Captura de áudio
-- **OpenCV**: Processamento de vídeo
-- **MediaPipe**: Detecção facial
-- **WebRTC**: Streaming de mídia
+#### **Backend & Processing**
+- **Python 3.8+**: Linguagem principal
+- **PyTorch/TensorFlow**: Frameworks de deep learning
+- **Transformers**: Modelos de tradução neural
+- **FastAPI**: API REST para serviços
 
-#### **NLP & Translation**
-- **NLTK**: Processamento de linguagem natural
-- **spaCy**: Análise linguística avançada
-- **sacrebleu**: Métricas de qualidade
-- **rouge-score**: Avaliação de tradução
+#### **Audio & NLP**
+- **Web Speech API**: Reconhecimento e síntese de voz
+- **NLTK/spaCy**: Processamento de linguagem natural
+- **LibROSA**: Análise de áudio (quando necessário)
 
-## 📁 Estrutura Completa do Projeto
+## 📁 Estrutura do Projeto
 
 ```
 NeuroTranslator_PT_EN/
-├── 🌐 web/                                 # Aplicação Web (NOVA)
-│   ├── index.html                          # Interface principal
-│   ├── debug_mobile.html                   # Debug para mobile
-│   ├── samsung_fix.html                    # Compatibilidade Samsung
+├── 🌐 web/                          # Aplicação Web Principal
+│   ├── index.html                   # Interface principal
+│   ├── voice_diagnostic.html        # Diagnóstico de voz
+│   ├── manifest.json               # PWA manifest
 │   └── assets/
 │       ├── css/
-│       │   └── styles.css                  # Estilos com tema escuro moderno
+│       │   └── styles.css          # Estilos modernos
 │       ├── js/
-│       │   └── script.js                   # Lógica da aplicação
-│       ├── images/
-│       │   ├── logo_original.png           # Logo principal
-│       │   └── preview.svg                 # Miniatura tema escuro (NOVA)
-│       └── icons/                          # Ícones da interface
-├── 📊 notebooks/                           # Jupyter Notebooks para desenvolvimento
-│   ├── 01_data_exploration.ipynb          # Análise exploratória dos dados
-│   ├── 02_model_training.ipynb            # Treinamento dos modelos CNN/RNN/Transformer
-│   ├── 03_evaluation.ipynb                # Avaliação e métricas
-│   ├── 04_real_time_processing.ipynb      # Sistema de processamento em tempo real
-│   ├── 05_interface_development.ipynb     # Desenvolvimento da interface gráfica
-│   ├── 06_integration_testing.ipynb       # Testes de integração e performance
-│   └── 07_final_demo.ipynb               # Demonstração final completa
-├── 🧠 src/                                # Código fonte principal
-│   ├── models/                            # Modelos de ML/DL
-│   │   ├── __init__.py
-│   │   └── model_manager.py               # Gerenciador de modelos
-│   ├── audio/                             # Processamento de áudio
-│   │   ├── __init__.py
-│   │   └── speech_recognition.py          # ASR engine
-│   ├── translation/                       # Engine de tradução
-│   │   ├── __init__.py
-│   │   └── translator.py                  # Core translator
-│   ├── camera/                            # Processamento de vídeo
-│   │   ├── __init__.py
-│   │   └── camera_manager.py              # Gerenciador de câmera
-│   ├── ui/                                # Interface do usuário
-│   │   ├── __init__.py
-│   │   └── main_interface.py              # Interface principal
-│   ├── mcp/                               # MCP Integration
-│   │   ├── __init__.py
-│   │   ├── mcp_client.py                  # Cliente MCP
-│   │   └── voice_assistant.py             # Assistente de voz
-│   └── utils/                             # Utilitários
-│       ├── __init__.py
-│       ├── config.py                      # Configurações
-│       └── logger.py                      # Sistema de logs
-├── 📊 data/                               # Datasets e dados
-├── 🏋️ models/                            # Modelos treinados
-├── 🧪 tests/                             # Testes unitários e integração
-│   ├── __init__.py
-│   └── test_translation.py               # Testes de tradução
-├── 📚 docs/                              # Documentação completa
-│   └── README_DEVELOPMENT.md             # Guia de desenvolvimento
-├── 🔧 config/                            # Arquivos de configuração
-│   └── default.yaml                      # Configuração padrão
-├── 🎨 backup_modified_files/             # Backup de arquivos modificados
-├── 📦 requirements.txt                    # Dependências Python
-├── 🐍 main.py                            # Ponto de entrada principal
-├── 🌐 https_server.py                    # Servidor HTTPS local
-├── 📄 LICENSE.md                         # Licença MIT
-├── 📖 README.md                          # Este arquivo
-├── 📋 INSTALL.md                         # Guia de instalação
-├── 📊 PROJECT_SUMMARY.md                 # Resumo do projeto
-├── 🎯 PRESENTATION.md                    # Apresentação do projeto
-└── ✅ PROJETO_FINALIZADO.md              # Status de finalização
+│       │   └── script.js           # Lógica da aplicação
+│       ├── images/                 # Imagens e logos
+│       └── icons/                  # Ícones da interface
+│
+├── 📊 src/                         # Código Fonte Principal
+│   ├── audio/                      # Processamento de áudio
+│   ├── translation/                # Módulos de tradução
+│   ├── models/                     # Gerenciamento de modelos
+│   ├── ui/                         # Interface do usuário
+│   └── utils/                      # Utilitários gerais
+│
+├── 📝 scripts/                     # Scripts de Desenvolvimento
+│   ├── mcp/                        # Scripts MCP (Model Control Protocol)
+│   ├── utils/                      # Utilitários de desenvolvimento
+│   └── maintenance/                # Scripts de manutenção
+│
+├── 📚 notebooks/                   # Jupyter Notebooks
+│   ├── 01_data_exploration.ipynb   # Análise exploratória
+│   ├── 02_model_training.ipynb     # Treinamento de modelos
+│   └── ...                         # Outros notebooks
+│
+├── 📖 docs/                        # Documentação
+│   ├── README_DEVELOPMENT.md       # Guia de desenvolvimento
+│   ├── INSTALL.md                  # Instruções de instalação
+│   └── ...                         # Documentação adicional
+│
+├── 🧪 tests/                       # Testes Automatizados
+├── ⚙️ config/                      # Configurações
+├── 📦 models/                      # Modelos treinados
+└── 📄 requirements.txt             # Dependências Python
 ```
 
-## 🚀 Instalação e Configuração
+## 🚀 Instalação e Uso
 
-### 📋 Pré-requisitos
-- **Python 3.8+** (recomendado 3.9 ou 3.10)
-- **Navegador moderno** (Chrome, Firefox, Safari, Edge)
-- **Microfone e câmera** funcionais
-- **8GB+ RAM** (16GB recomendado para melhor performance)
-- **Conexão com internet** para APIs de tradução
+### 📱 **Uso Web (Recomendado)**
 
-### ⚡ Instalação Rápida
+1. **Acesso Direto**: [https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
 
-#### 🌐 **Versão Web (Recomendada)**
-1. **Acesse diretamente**: [https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-2. **Permita acesso** ao microfone e câmera quando solicitado
-3. **Comece a traduzir** imediatamente!
+2. **Servidor Local**:
+   ```bash
+   # Clone o repositório
+   git clone https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN.git
+   cd NeuroTranslator_PT_EN
+   
+   # Inicie o servidor local
+   python -m http.server 8000 --directory web
+   
+   # Acesse: http://localhost:8000
+   ```
 
-#### 💻 **Versão Local**
-1. **Clone o repositório**
+### 🐍 **Instalação Python (Desenvolvimento)**
+
 ```bash
+# Clone o repositório
 git clone https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN.git
 cd NeuroTranslator_PT_EN
-```
 
-2. **Crie um ambiente virtual**
-```bash
-# Windows
+# Crie um ambiente virtual
 python -m venv venv
-venv\Scripts\activate
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
 
-# Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
-```
-
-3. **Instale as dependências**
-```bash
+# Instale as dependências
 pip install -r requirements.txt
-```
 
-4. **Execute a aplicação**
-```bash
-# Versão web local
-python https_server.py
-
-# Versão desktop
+# Execute a aplicação
 python main.py
 ```
 
-## 📱 Como Usar
+## 🔧 Desenvolvimento
 
-### 🌐 **Versão Web**
+### 📋 **Pré-requisitos**
+- Python 3.8+
+- Node.js (para ferramentas de desenvolvimento)
+- Navegador moderno com suporte a Web APIs
 
-1. **Acesse a aplicação** no navegador
-2. **Permita acesso** ao microfone e câmera
-3. **Selecione os idiomas** (Português ↔ Inglês)
-4. **Digite ou fale** o texto para traduzir
-5. **Visualize a tradução** em tempo real
-6. **Ouça a pronúncia** com síntese de voz
-7. **Consulte o histórico** de traduções
+### 🛠️ **Scripts Úteis**
 
-### 🎤 **Reconhecimento de Voz**
-- Clique no botão **"🎤 Falar"**
-- Fale claramente no microfone
-- A transcrição aparecerá automaticamente
-- A tradução será processada em tempo real
+```bash
+# Servidor de desenvolvimento
+python scripts/utils/https_server.py
 
-### 📹 **Captura de Vídeo**
-- Clique em **"Ativar Câmera"**
-- Permita acesso à câmera
-- Use para contexto visual ou futuras funcionalidades
+# Geração de favicons
+python scripts/utils/generate_favicon.py
 
-## 🎨 Design e Interface
+# Diagnóstico de voz
+# Acesse: /voice_diagnostic.html
+```
 
-### 🌙 **Tema Escuro Moderno**
-- **Paleta de cores escura** para reduzir fadiga visual
-- **Glass morphism** com efeitos de vidro translúcido
-- **Backdrop blur** para profundidade e modernidade
-- **Animações suaves** para melhor experiência
+### 🧪 **Testes**
 
-### 📱 **Responsividade**
-- **Desktop**: Interface completa com todas as funcionalidades
-- **Tablet**: Layout adaptado para telas médias
-- **Mobile**: Interface otimizada para smartphones
+```bash
+# Execute os testes
+python -m pytest tests/
 
-### ♿ **Acessibilidade**
-- **Alto contraste** para melhor legibilidade
-- **Navegação por teclado** completa
-- **Suporte a leitores de tela**
-- **Textos alternativos** em imagens
-
-## 🔧 Desenvolvimento e Pesquisa
-
-### 📊 **Notebooks Jupyter**
-O projeto inclui notebooks detalhados para:
-- **Exploração de dados** e análise estatística
-- **Desenvolvimento de modelos** CNN, RNN e Transformer
-- **Avaliação de performance** com métricas BLEU/ROUGE
-- **Processamento em tempo real** e otimizações
-- **Desenvolvimento da interface** e testes de usabilidade
-
-### 🧪 **Testes e Qualidade**
-- **Testes unitários** para componentes individuais
-- **Testes de integração** para fluxos completos
-- **Testes de performance** para latência e throughput
-- **Testes de usabilidade** com usuários reais
-
-## 📊 Cronograma de Desenvolvimento
-
-### ✅ **Fase 1 - Concluída** (Novembro 2024)
-- [x] Estrutura base do projeto
-- [x] Modelos de tradução neural
-- [x] Interface desktop com CustomTkinter
-- [x] Reconhecimento de voz básico
-
-### ✅ **Fase 2 - Concluída** (Dezembro 2024)
-- [x] Versão web responsiva
-- [x] Integração com APIs de tradução
-- [x] Sistema de histórico
-- [x] Compatibilidade mobile
-
-### ✅ **Fase 3 - Concluída** (Janeiro 2025)
-- [x] **Tema escuro moderno** com glass morphism
-- [x] **Interface compacta** e otimizada
-- [x] **Animações fluidas** e efeitos visuais
-- [x] **Deploy no GitHub Pages**
-- [x] **Documentação completa**
-
-### 🔄 **Fase 4 - Em Desenvolvimento** (Fevereiro 2025)
-- [ ] Modelos neurais próprios
-- [ ] Processamento offline
-- [ ] API REST completa
-- [ ] Integração com plataformas de videoconferência
+# Teste específico
+python -m pytest tests/test_translation.py
+```
 
 ## 🤝 Contribuição
 
-Contribuições são bem-vindas! Para contribuir:
-
 1. **Fork** o projeto
-2. **Crie uma branch** para sua feature (`git checkout -b feature/AmazingFeature`)
+2. Crie uma **branch** para sua feature (`git checkout -b feature/AmazingFeature`)
 3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
 4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. **Abra um Pull Request**
+5. Abra um **Pull Request**
 
-### 📋 **Guidelines**
+### 📝 **Diretrizes de Contribuição**
 - Siga os padrões de código existentes
 - Adicione testes para novas funcionalidades
 - Atualize a documentação quando necessário
-- Use commits descritivos e claros
+- Use commits semânticos
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE.md](LICENSE.md) para detalhes.
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE.md](LICENSE.md) para detalhes.
 
 ## 🙏 Agradecimentos
 
-- **Hugging Face** pelos modelos Transformers
-- **OpenAI** pelas APIs de tradução
-- **Google** pelas Web APIs (Speech Recognition, WebRTC)
-- **Mozilla** pelo suporte a tecnologias web modernas
-- **Comunidade Open Source** pelas bibliotecas e ferramentas
-
-## 🔗 Contato:
-
-Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
-
--   **Nome:** Flávio Henrique Barbosa
--   **LinkedIn:** [Flávio Henrique Barbosa | LinkedIn](https://www.linkedin.com/in/fl%C3%A1vio-henrique-barbosa-38465938)
--   **Email:** flaviohenriquehb777@outlook.com
+- **Hugging Face** - Modelos de tradução neural
+- **Google** - Web Speech API
+- **Mozilla** - Ferramentas de desenvolvimento web
+- **Comunidade Open Source** - Bibliotecas e frameworks utilizados
 
 ---
 
 <div align="center">
+  <strong>Desenvolvido com ❤️ por <a href="https://github.com/flaviohenriquehb777">Flávio Henrique</a></strong>
+</div>
 
-**© 2025 NeuroTranslator - Desenvolvido por Flávio Henrique Barbosa**
-
-**Versão Web - Hospedado no GitHub Pages**
-
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
-
-**🌟 Se este projeto foi útil para você, considere dar uma ⭐ no GitHub!**
-
+<div align="center">
+  <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">🚀 Experimente Agora</a> •
+  <a href="https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/issues">🐛 Reportar Bug</a> •
+  <a href="https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/discussions">💬 Discussões</a>
 </div>

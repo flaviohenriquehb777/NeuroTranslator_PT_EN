@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Vozes - NeuroTranslator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .voice-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+            border-radius: 3px;
+        }
+        .voice-item.male {
+            border-left-color: #28a745;
+        }
+        .voice-item.female {
+            border-left-color: #dc3545;
+        }
+        .voice-item.unknown {
+            border-left-color: #ffc107;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-area {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Diagnóstico de Vozes do Sistema</h1>
+        
+        <div class="section">
+            <h2>📊 Análise de Vozes Disponíveis</h2>
+            <button onclick="analyzeVoices()">🔍 Analisar Vozes</button>
+            <div id="voiceAnalysis"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Teste de Seleção por Gênero</h2>
+            <div class="test-area">
+                <label>Texto de teste:</label>
+                <input type="text" id="testText" value="Olá, este é um teste de voz." style="width: 300px; padding: 5px;">
+                <br><br>
+                <label>Idioma:</label>
+                <select id="testLanguage">
+                    <option value="pt">Português</option>
+                    <option value="en">Inglês</option>
+                    <option value="es">Espanhol</option>
+                    <option value="fr">Francês</option>
+                    <option value="de">Alemão</option>
+                    <option value="zh">Chinês</option>
+                </select>
+                <br><br>
+                <button onclick="testVoiceSelection('male')">🎭 Testar Voz Masculina</button>
+                <button onclick="testVoiceSelection('female')">🎭 Testar Voz Feminina</button>
+                <button onclick="testVoiceSelection('auto')">🎭 Testar Voz Automática</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Log de Diagnóstico</h2>
+            <div id="diagnosticLog" class="log"></div>
+            <button onclick="clearLog()">🗑️ Limpar Log</button>
+        </div>
+    </div>
+
+    <script>
+        let diagnosticLog = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            diagnosticLog.push(logMessage);
+            document.getElementById('diagnosticLog').innerHTML = diagnosticLog.join('\n');
+            document.getElementById('diagnosticLog').scrollTop = document.getElementById('diagnosticLog').scrollHeight;
+            console.log(logMessage);
+        }
+
+        function clearLog() {
+            diagnosticLog = [];
+            document.getElementById('diagnosticLog').innerHTML = '';
+        }
+
+        function analyzeVoices() {
+            log('🔍 Iniciando análise de vozes...');
+            
+            const voices = speechSynthesis.getVoices();
+            log(`📊 Total de vozes encontradas: ${voices.length}`);
+
+            const voiceLangMap = {
+                'pt': 'pt-BR',
+                'en': 'en-US',
+                'es': 'es-ES',
+                'fr': 'fr-FR',
+                'de': 'de-DE',
+                'zh': 'zh-CN'
+            };
+
+            const malePatterns = [
+                'ricardo', 'felipe', 'daniel', 'carlos', 'joão', 'pedro', 'paulo', 'marcos', 'andré',
+                'david', 'mark', 'alex', 'james', 'john', 'michael', 'robert', 'william', 'thomas',
+                'diego', 'pablo', 'jorge', 'miguel', 'antonio', 'francisco', 'manuel',
+                'pierre', 'jean', 'michel', 'philippe', 'antoine', 'nicolas',
+                'hans', 'klaus', 'stefan', 'andreas',
+                'wang', 'li', 'zhang', 'chen',
+                'male', 'masculin', 'homem', 'man', 'hombre', 'homme', 'mann', 'masculine'
+            ];
+            
+            const femalePatterns = [
+                'maria', 'ana', 'lucia', 'fernanda', 'beatriz', 'carla', 'patricia', 'sandra', 'monica',
+                'susan', 'mary', 'sarah', 'jennifer', 'lisa', 'karen', 'nancy', 'betty', 'helen', 'donna',
+                'carmen', 'pilar', 'esperanza', 'dolores', 'mercedes', 'rosa', 'teresa',
+                'marie', 'françoise', 'monique', 'sylvie', 'catherine', 'brigitte',
+                'anna', 'petra', 'sabine', 'claudia', 'andrea',
+                'mei', 'ling', 'xiao', 'yan',
+                'female', 'feminin', 'mulher', 'woman', 'mujer', 'femme', 'frau', 'feminine'
+            ];
+
+            let analysisHTML = '<h3>Vozes por Idioma:</h3>';
+            
+            Object.keys(voiceLangMap).forEach(lang => {
+                const targetLang = voiceLangMap[lang];
+                const langVoices = voices.filter(voice => 
+                    voice.lang === targetLang || voice.lang.startsWith(lang)
+                );
+                
+                analysisHTML += `<h4>${lang.toUpperCase()} (${targetLang}):</h4>`;
+                
+                if (langVoices.length === 0) {
+                    analysisHTML += '<p style="color: red;">❌ Nenhuma voz encontrada</p>';
+                    log(`❌ ${lang}: Nenhuma voz encontrada`);
+                } else {
+                    langVoices.forEach(voice => {
+                        const isMale = malePatterns.some(pattern => 
+                            voice.name.toLowerCase().includes(pattern.toLowerCase())
+                        );
+                        const isFemale = femalePatterns.some(pattern => 
+                            voice.name.toLowerCase().includes(pattern.toLowerCase())
+                        );
+                        
+                        let genderClass = 'unknown';
+                        let genderIcon = '❓';
+                        
+                        if (isMale) {
+                            genderClass = 'male';
+                            genderIcon = '👨';
+                        } else if (isFemale) {
+                            genderClass = 'female';
+                            genderIcon = '👩';
+                        }
+                        
+                        analysisHTML += `<div class="voice-item ${genderClass}">
+                            ${genderIcon} <strong>${voice.name}</strong> (${voice.lang})
+                            <button onclick="testSpecificVoice('${voice.name}', '${voice.lang}')">🔊 Testar</button>
+                        </div>`;
+                        
+                        log(`${genderIcon} ${lang}: ${voice.name} (${voice.lang})`);
+                    });
+                }
+            });
+
+            document.getElementById('voiceAnalysis').innerHTML = analysisHTML;
+            log('✅ Análise de vozes concluída');
+        }
+
+        function testSpecificVoice(voiceName, voiceLang) {
+            const text = document.getElementById('testText').value;
+            log(`🔊 Testando voz específica: ${voiceName} (${voiceLang})`);
+            
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            const voices = speechSynthesis.getVoices();
+            const selectedVoice = voices.find(voice => voice.name === voiceName);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                utterance.lang = voiceLang;
+                utterance.rate = 0.9;
+                utterance.volume = 1;
+                
+                speechSynthesis.speak(utterance);
+                log(`✅ Reproduzindo: ${voiceName}`);
+            } else {
+                log(`❌ Erro: Voz ${voiceName} não encontrada`);
+            }
+        }
+
+        function testVoiceSelection(gender) {
+            const text = document.getElementById('testText').value;
+            const language = document.getElementById('testLanguage').value;
+            
+            log(`🧪 Testando seleção de voz ${gender} para idioma ${language}`);
+            
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            const voiceLangMap = {
+                'pt': 'pt-BR',
+                'en': 'en-US',
+                'es': 'es-ES',
+                'fr': 'fr-FR',
+                'de': 'de-DE',
+                'zh': 'zh-CN'
+            };
+            
+            const targetLang = voiceLangMap[language] || 'pt-BR';
+            utterance.lang = targetLang;
+            
+            const voices = speechSynthesis.getVoices();
+            let selectedVoice = null;
+            
+            const malePatterns = [
+                'ricardo', 'felipe', 'daniel', 'carlos', 'joão', 'pedro', 'paulo', 'marcos', 'andré',
+                'david', 'mark', 'alex', 'james', 'john', 'michael', 'robert', 'william', 'thomas',
+                'diego', 'pablo', 'jorge', 'miguel', 'antonio', 'francisco', 'manuel',
+                'pierre', 'jean', 'michel', 'philippe', 'antoine', 'nicolas',
+                'hans', 'klaus', 'stefan', 'andreas',
+                'wang', 'li', 'zhang', 'chen',
+                'male', 'masculin', 'homem', 'man', 'hombre', 'homme', 'mann', 'masculine'
+            ];
+            
+            const femalePatterns = [
+                'maria', 'ana', 'lucia', 'fernanda', 'beatriz', 'carla', 'patricia', 'sandra', 'monica',
+                'susan', 'mary', 'sarah', 'jennifer', 'lisa', 'karen', 'nancy', 'betty', 'helen', 'donna',
+                'carmen', 'pilar', 'esperanza', 'dolores', 'mercedes', 'rosa', 'teresa',
+                'marie', 'françoise', 'monique', 'sylvie', 'catherine', 'brigitte',
+                'anna', 'petra', 'sabine', 'claudia', 'andrea',
+                'mei', 'ling', 'xiao', 'yan',
+                'female', 'feminin', 'mulher', 'woman', 'mujer', 'femme', 'frau', 'feminine'
+            ];
+
+            if (gender === 'male') {
+                log(`🔍 Procurando voz masculina para ${language} (${targetLang})`);
+                
+                // Primeira tentativa: voz masculina no idioma correto
+                selectedVoice = voices.find(voice => {
+                    const isCorrectLang = voice.lang === targetLang || voice.lang.startsWith(language);
+                    const isMale = malePatterns.some(pattern => 
+                        voice.name.toLowerCase().includes(pattern.toLowerCase())
+                    );
+                    return isCorrectLang && isMale;
+                });
+                
+                if (selectedVoice) {
+                    log(`✅ Encontrada voz masculina no idioma: ${selectedVoice.name}`);
+                } else {
+                    log(`⚠️ Nenhuma voz masculina encontrada para ${language}, procurando globalmente...`);
+                    
+                    // Segunda tentativa: qualquer voz masculina
+                    selectedVoice = voices.find(voice => 
+                        malePatterns.some(pattern => 
+                            voice.name.toLowerCase().includes(pattern.toLowerCase())
+                        )
+                    );
+                    
+                    if (selectedVoice) {
+                        log(`⚠️ Usando voz masculina de outro idioma: ${selectedVoice.name}`);
+                    }
+                }
+                
+                utterance.pitch = 0.7;
+                utterance.rate = 0.85;
+                
+            } else if (gender === 'female') {
+                log(`🔍 Procurando voz feminina para ${language} (${targetLang})`);
+                
+                // Primeira tentativa: voz feminina no idioma correto
+                selectedVoice = voices.find(voice => {
+                    const isCorrectLang = voice.lang === targetLang || voice.lang.startsWith(language);
+                    const isFemale = femalePatterns.some(pattern => 
+                        voice.name.toLowerCase().includes(pattern.toLowerCase())
+                    );
+                    return isCorrectLang && isFemale;
+                });
+                
+                if (selectedVoice) {
+                    log(`✅ Encontrada voz feminina no idioma: ${selectedVoice.name}`);
+                } else {
+                    log(`⚠️ Nenhuma voz feminina encontrada para ${language}, procurando globalmente...`);
+                    
+                    // Segunda tentativa: qualquer voz feminina
+                    selectedVoice = voices.find(voice => 
+                        femalePatterns.some(pattern => 
+                            voice.name.toLowerCase().includes(pattern.toLowerCase())
+                        )
+                    );
+                    
+                    if (selectedVoice) {
+                        log(`⚠️ Usando voz feminina de outro idioma: ${selectedVoice.name}`);
+                    }
+                }
+                
+                utterance.pitch = 1.3;
+                utterance.rate = 0.95;
+            } else {
+                log(`🔍 Procurando primeira voz disponível para ${language} (${targetLang})`);
+                selectedVoice = voices.find(voice => 
+                    voice.lang === targetLang || voice.lang.startsWith(language)
+                );
+                
+                utterance.pitch = 1;
+                utterance.rate = 0.9;
+            }
+            
+            // Fallback para qualquer voz do idioma
+            if (!selectedVoice) {
+                log(`⚠️ Fallback: procurando qualquer voz para ${language}`);
+                selectedVoice = voices.find(voice => 
+                    voice.lang === targetLang || voice.lang.startsWith(language)
+                );
+            }
+            
+            // Fallback final
+            if (!selectedVoice && voices.length > 0) {
+                selectedVoice = voices[0];
+                log(`❌ Usando voz padrão do sistema: ${selectedVoice.name}`);
+            }
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                log(`🔊 Voz final selecionada: ${selectedVoice.name} (${selectedVoice.lang})`);
+                log(`🎛️ Configurações: pitch=${utterance.pitch}, rate=${utterance.rate}`);
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                log(`❌ ERRO: Nenhuma voz disponível no sistema!`);
+            }
+        }
+
+        // Aguardar carregamento das vozes
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.addEventListener('voiceschanged', () => {
+                log('🔄 Vozes do sistema carregadas');
+            });
+        } else {
+            log('✅ Vozes já disponíveis');
+        }
+    </script>
+</body>
+</html>
