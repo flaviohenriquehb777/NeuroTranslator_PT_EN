@@ -51,7 +51,7 @@ body {
 .header {
     background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 30%, #2a2a2a 70%, #0a0a0a 100%);
     color: white;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1.5rem;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
     position: relative;
@@ -59,7 +59,7 @@ body {
     border-radius: 1rem;
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(20px);
-    min-height: 120px;
+    min-height: 90px;
 }
 
 .header::before {
@@ -553,12 +553,15 @@ textarea::placeholder {
 .voice-gender-selector {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 0;
     padding: 10px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 340px;
 }
 
 .voice-gender-selector label {
@@ -577,7 +580,7 @@ textarea::placeholder {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 140px;
+    min-width: 160px;
 }
 
 .voice-select:hover {
@@ -618,8 +621,9 @@ textarea::placeholder {
 /* Options */
 .options {
     display: flex;
+    flex-direction: column;
     gap: 1.5rem;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
 }
 

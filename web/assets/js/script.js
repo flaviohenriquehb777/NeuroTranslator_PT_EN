@@ -11,8 +11,7 @@ class NeuroTranslatorWeb {
         
         this.translation = {
             history: [],
-            autoTranslate: true,
-            liveMode: false
+            autoTranslate: true
         };
         
         // Neuro Assistant
@@ -52,7 +51,6 @@ class NeuroTranslatorWeb {
         this.elements.clearText = document.getElementById('clearText');
         this.elements.copyTranslation = document.getElementById('copyTranslation');
         this.elements.autoTranslate = document.getElementById('autoTranslate');
-        this.elements.liveMode = document.getElementById('liveMode');
         
         // Elementos de histórico
         this.elements.historyContainer = document.getElementById('historyContainer');
@@ -112,16 +110,6 @@ class NeuroTranslatorWeb {
         this.elements.autoTranslate.addEventListener('change', (e) => {
             this.translation.autoTranslate = e.target.checked;
             this.saveSettings();
-        });
-        
-        this.elements.liveMode.addEventListener('change', (e) => {
-            this.translation.liveMode = e.target.checked;
-            this.saveSettings();
-            if (e.target.checked) {
-                this.startLiveMode();
-            } else {
-                this.stopLiveMode();
-            }
         });
         
         // Teclas de atalho
@@ -653,19 +641,6 @@ class NeuroTranslatorWeb {
         }
     }
     
-    startLiveMode() {
-        console.log('🔴 Modo ao vivo ativado');
-        // Ativar fala automaticamente
-        if (!this.speech.active && this.speech.supported) {
-            this.startSpeech();
-        }
-    }
-    
-    stopLiveMode() {
-        console.log('⏹️ Modo ao vivo desativado');
-        // Manter fala como está, apenas desativar modo automático
-    }
-    
     handleKeyboard(event) {
         // Ctrl/Cmd + Enter: Traduzir
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -714,7 +689,6 @@ class NeuroTranslatorWeb {
         const voiceGenderSelect = document.getElementById('voiceGender');
         const settings = {
             autoTranslate: this.translation.autoTranslate,
-            liveMode: this.translation.liveMode,
             history: this.translation.history,
             sourceLanguage: this.elements.sourceLanguage.value,
             targetLanguage: this.elements.targetLanguage.value,
@@ -730,14 +704,10 @@ class NeuroTranslatorWeb {
             if (settings) {
                 const parsed = JSON.parse(settings);
                 this.translation.autoTranslate = parsed.autoTranslate !== false;
-                this.translation.liveMode = parsed.liveMode === true;
                 
                 // Aplicar configurações aos elementos
                 if (this.elements.autoTranslate) {
                     this.elements.autoTranslate.checked = this.translation.autoTranslate;
-                }
-                if (this.elements.liveMode) {
-                    this.elements.liveMode.checked = this.translation.liveMode;
                 }
                 
                 // Aplicar configuração de gênero de voz
