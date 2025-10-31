@@ -2,9 +2,9 @@
 
 <div align="center">
   
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![Version](https://img.shields.io/badge/Version-3.0-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/YOUR_USERNAME/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://YOUR_USERNAME.github.io/NeuroTranslator_PT_EN/)
+[![Version](https://img.shields.io/badge/Version-3.0-blue)](https://github.com/YOUR_USERNAME/NeuroTranslator_PT_EN)
 
 </div>
 
@@ -23,8 +23,8 @@
 ---
 
 <div align="center">
-  <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/">
-    <img src="https://raw.githubusercontent.com/flaviohenriquehb777/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App" width="600" />
+  <a href="https://YOUR_USERNAME.github.io/NeuroTranslator_PT_EN/">
+    <img src="https://raw.githubusercontent.com/YOUR_USERNAME/NeuroTranslator_PT_EN/main/web/assets/images/preview.svg" alt="NeuroTranslator Web App" width="600" />
   </a>
 </div>
 

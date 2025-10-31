@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "langchain": {
+      "command": "C:\\Users\\flavi\\Documents\\GitHub\\NeuroTranslator_PT_EN\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\Users\\flavi\\Documents\\GitHub\\NeuroTranslator_PT_EN\\langchain_mcp_server.py"],
+      "transport": "stdio",
+      "description": "LangChain MCP Tools Server"
+    }
+  }
+}

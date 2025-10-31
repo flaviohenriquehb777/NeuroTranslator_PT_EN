@@ -164,11 +164,17 @@
                         </label>
                         <div class="voice-gender-selector">
                             <label for="voiceGender">🎤 Voz para tradução:</label>
-                            <select id="voiceGender" class="voice-select">
-                                <option value="auto">🤖 Automática</option>
-                                <option value="male">👨 Masculina</option>
-                                <option value="female">👩 Feminina</option>
-                            </select>
+                            <div style="position: relative;">
+                                <select id="voiceGender" class="voice-select">
+                                    <option value="auto">🤖 Automática (Alterna)</option>
+                                    <option value="male">👨 Masculina</option>
+                                    <option value="female">👩 Feminina</option>
+                                </select>
+                                <div class="voice-status-indicator" id="voiceStatusIndicator"></div>
+                                <div class="voice-tooltip" id="voiceTooltip">
+                                    Sistema aprimorado de seleção de vozes ativo
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

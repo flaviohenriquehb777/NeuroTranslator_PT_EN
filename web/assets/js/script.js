@@ -102,8 +102,13 @@ class NeuroTranslatorWeb {
         if (voiceGenderSelect) {
             voiceGenderSelect.addEventListener('change', (e) => {
                 console.log('🎤 Gênero de voz alterado para:', e.target.value);
+                this.currentGender = e.target.value;
+                this.updateVoiceStatusIndicator(e.target.value);
                 this.saveSettings();
             });
+            
+            // Ativar indicador de status inicialmente
+            this.updateVoiceStatusIndicator(voiceGenderSelect.value);
         }
         
         // Configurações
@@ -1098,78 +1103,224 @@ class NeuroTranslatorWeb {
         return 'pt'; // Default para português
     }
     
-    // Sistema de vozes fixas para garantir consistência entre sistemas
-    getFixedVoice(language, gender) {
+    // Sistema aprimorado de vozes com melhor detecção de gênero
+    getEnhancedVoice(language, gender) {
         const voices = speechSynthesis.getVoices();
         
-        // Configuração de vozes fixas por idioma e gênero
-        const fixedVoices = {
+        // Base de dados aprimorada de vozes por idioma e gênero
+        const enhancedVoiceDatabase = {
             'pt': {
-                'male': ['Microsoft Daniel - Portuguese (Brazil)', 'Google português do Brasil', 'Daniel', 'Ricardo'],
-                'female': ['Microsoft Maria - Portuguese (Brazil)', 'Google português do Brasil', 'Maria', 'Fernanda', 'Luciana']
+                'male': [
+                    // Vozes Microsoft (mais confiáveis)
+                    'Microsoft Daniel - Portuguese (Brazil)',
+                    'Microsoft Helio - Portuguese (Brazil)', 
+                    'Microsoft Ricardo - Portuguese (Brazil)',
+                    // Vozes Google
+                    'Google português do Brasil (masculino)',
+                    'Google português do Brasil',
+                    // Vozes nativas
+                    'Daniel', 'Ricardo', 'Helio', 'Felipe', 'Carlos', 'João', 'Pedro'
+                ],
+                'female': [
+                    // Vozes Microsoft (mais confiáveis)
+                    'Microsoft Maria - Portuguese (Brazil)',
+                    'Microsoft Francisca - Portuguese (Brazil)',
+                    'Microsoft Leia - Portuguese (Brazil)',
+                    // Vozes Google
+                    'Google português do Brasil (feminino)',
+                    'Google português do Brasil',
+                    // Vozes nativas
+                    'Maria', 'Fernanda', 'Luciana', 'Ana', 'Beatriz', 'Carla'
+                ]
             },
             'en': {
-                'male': ['Microsoft David - English (United States)', 'Google US English', 'David', 'Mark', 'Alex'],
-                'female': ['Microsoft Zira - English (United States)', 'Google US English', 'Zira', 'Samantha', 'Victoria']
+                'male': [
+                    'Microsoft David - English (United States)',
+                    'Microsoft Mark - English (United States)',
+                    'Google US English (masculino)',
+                    'Google US English',
+                    'David', 'Mark', 'Alex', 'James', 'John', 'Michael'
+                ],
+                'female': [
+                    'Microsoft Zira - English (United States)',
+                    'Microsoft Aria - English (United States)',
+                    'Google US English (feminino)',
+                    'Google US English',
+                    'Zira', 'Aria', 'Samantha', 'Victoria', 'Susan', 'Karen'
+                ]
             },
             'es': {
-                'male': ['Microsoft Pablo - Spanish (Spain)', 'Google español', 'Pablo', 'Diego', 'Carlos'],
-                'female': ['Microsoft Helena - Spanish (Spain)', 'Google español', 'Helena', 'Paloma', 'Monica']
+                'male': [
+                    'Microsoft Pablo - Spanish (Spain)',
+                    'Microsoft Diego - Spanish (Spain)',
+                    'Google español (masculino)',
+                    'Google español',
+                    'Pablo', 'Diego', 'Carlos', 'Jorge', 'Miguel'
+                ],
+                'female': [
+                    'Microsoft Helena - Spanish (Spain)',
+                    'Microsoft Paloma - Spanish (Spain)',
+                    'Google español (feminino)',
+                    'Google español',
+                    'Helena', 'Paloma', 'Monica', 'Carmen', 'Rosa'
+                ]
             },
             'fr': {
-                'male': ['Microsoft Paul - French (France)', 'Google français', 'Paul', 'Thomas'],
-                'female': ['Microsoft Hortense - French (France)', 'Google français', 'Hortense', 'Amelie']
+                'male': [
+                    'Microsoft Paul - French (France)',
+                    'Microsoft Claude - French (France)',
+                    'Google français (masculino)',
+                    'Google français',
+                    'Paul', 'Claude', 'Thomas', 'Pierre', 'Jean'
+                ],
+                'female': [
+                    'Microsoft Hortense - French (France)',
+                    'Microsoft Julie - French (France)',
+                    'Google français (feminino)',
+                    'Google français',
+                    'Hortense', 'Julie', 'Amelie', 'Marie', 'Sylvie'
+                ]
             },
             'de': {
-                'male': ['Microsoft Stefan - German (Germany)', 'Google Deutsch', 'Stefan', 'Hans'],
-                'female': ['Microsoft Hedda - German (Germany)', 'Google Deutsch', 'Hedda', 'Anna']
+                'male': [
+                    'Microsoft Stefan - German (Germany)',
+                    'Microsoft Ralf - German (Germany)',
+                    'Google Deutsch (masculino)',
+                    'Google Deutsch',
+                    'Stefan', 'Ralf', 'Hans', 'Klaus', 'Andreas'
+                ],
+                'female': [
+                    'Microsoft Hedda - German (Germany)',
+                    'Microsoft Katrin - German (Germany)',
+                    'Google Deutsch (feminino)',
+                    'Google Deutsch',
+                    'Hedda', 'Katrin', 'Anna', 'Petra', 'Sabine'
+                ]
             },
             'zh': {
-                'male': ['Microsoft Kangkang - Chinese (Simplified, PRC)', 'Google 普通话（中国大陆）', 'Kangkang'],
-                'female': ['Microsoft Yaoyao - Chinese (Simplified, PRC)', 'Google 普通话（中国大陆）', 'Yaoyao', 'Ting-Ting']
+                'male': [
+                    'Microsoft Kangkang - Chinese (Simplified, PRC)',
+                    'Microsoft Yunyang - Chinese (Simplified, PRC)',
+                    'Google 普通话（中国大陆）(masculino)',
+                    'Google 普通话（中国大陆）',
+                    'Kangkang', 'Yunyang', 'Wang', 'Li', 'Zhang'
+                ],
+                'female': [
+                    'Microsoft Yaoyao - Chinese (Simplified, PRC)',
+                    'Microsoft Xiaoxiao - Chinese (Simplified, PRC)',
+                    'Google 普通话（中国大陆）(feminino)',
+                    'Google 普通话（中国大陆）',
+                    'Yaoyao', 'Xiaoxiao', 'Ting-Ting', 'Mei', 'Ling'
+                ]
             }
         };
 
         const targetLang = this.getLanguageCode(language);
-        const voiceOptions = fixedVoices[language];
+        const voiceOptions = enhancedVoiceDatabase[language];
         
         if (!voiceOptions) {
-            return null;
+            console.warn(`⚠️ Idioma não suportado no banco de vozes: ${language}`);
+            return this.getFallbackVoice(voices, targetLang, gender);
         }
 
         const genderVoices = voiceOptions[gender] || voiceOptions['female'];
         
-        // Tentar encontrar uma voz específica da lista
+        // 1. Busca exata por nome da voz
         for (const voiceName of genderVoices) {
-            const voice = voices.find(v => 
-                v.name.includes(voiceName) || 
-                (v.lang === targetLang && v.name.toLowerCase().includes(voiceName.toLowerCase()))
-            );
+            const voice = voices.find(v => v.name === voiceName);
             if (voice) {
+                console.log(`✅ Voz encontrada (busca exata): ${voice.name}`);
                 return voice;
             }
         }
 
-        // Fallback: procurar qualquer voz do idioma com indicadores de gênero
-        const genderKeywords = {
-            'male': ['male', 'masculin', 'homem', 'man', 'hombre', 'homme', 'mann', '男'],
-            'female': ['female', 'feminin', 'mulher', 'woman', 'mujer', 'femme', 'frau', '女']
+        // 2. Busca por inclusão de nome
+        for (const voiceName of genderVoices) {
+            const voice = voices.find(v => 
+                v.name.includes(voiceName) && 
+                (v.lang === targetLang || v.lang.startsWith(language))
+            );
+            if (voice) {
+                console.log(`✅ Voz encontrada (busca por inclusão): ${voice.name}`);
+                return voice;
+            }
+        }
+
+        // 3. Busca por palavras-chave de gênero aprimorada
+        const enhancedGenderKeywords = {
+            'male': {
+                'pt': ['masculin', 'homem', 'daniel', 'ricardo', 'helio', 'felipe', 'carlos', 'joão', 'pedro'],
+                'en': ['male', 'man', 'david', 'mark', 'alex', 'james', 'john', 'michael'],
+                'es': ['masculin', 'hombre', 'pablo', 'diego', 'carlos', 'jorge', 'miguel'],
+                'fr': ['masculin', 'homme', 'paul', 'claude', 'thomas', 'pierre', 'jean'],
+                'de': ['männlich', 'mann', 'stefan', 'ralf', 'hans', 'klaus', 'andreas'],
+                'zh': ['男', 'kangkang', 'yunyang', 'wang', 'li', 'zhang'],
+                'global': ['male', 'masculin', 'man', 'homme', 'mann', 'hombre']
+            },
+            'female': {
+                'pt': ['feminin', 'mulher', 'maria', 'francisca', 'leia', 'fernanda', 'luciana', 'ana'],
+                'en': ['female', 'woman', 'zira', 'aria', 'samantha', 'victoria', 'susan', 'karen'],
+                'es': ['feminin', 'mujer', 'helena', 'paloma', 'monica', 'carmen', 'rosa'],
+                'fr': ['féminin', 'femme', 'hortense', 'julie', 'amelie', 'marie', 'sylvie'],
+                'de': ['weiblich', 'frau', 'hedda', 'katrin', 'anna', 'petra', 'sabine'],
+                'zh': ['女', 'yaoyao', 'xiaoxiao', 'ting-ting', 'mei', 'ling'],
+                'global': ['female', 'feminin', 'woman', 'femme', 'frau', 'mujer']
+            }
         };
 
-        const keywords = genderKeywords[gender] || genderKeywords['female'];
+        const keywords = [
+            ...(enhancedGenderKeywords[gender][language] || []),
+            ...enhancedGenderKeywords[gender]['global']
+        ];
         
         for (const keyword of keywords) {
             const voice = voices.find(v => 
                 (v.lang === targetLang || v.lang.startsWith(language)) &&
-                v.name.toLowerCase().includes(keyword)
+                v.name.toLowerCase().includes(keyword.toLowerCase())
             );
             if (voice) {
+                console.log(`✅ Voz encontrada (palavra-chave): ${voice.name} (${keyword})`);
                 return voice;
             }
         }
 
-        // Último fallback: primeira voz disponível do idioma
-        return voices.find(v => v.lang === targetLang || v.lang.startsWith(language));
+        // 4. Fallback inteligente
+        return this.getFallbackVoice(voices, targetLang, gender);
+    }
+
+    getFallbackVoice(voices, targetLang, gender) {
+        console.log(`🔄 Iniciando fallback para ${targetLang}, gênero: ${gender}`);
+        
+        // Tentar encontrar qualquer voz do idioma
+        const langVoices = voices.filter(v => 
+            v.lang === targetLang || v.lang.startsWith(targetLang.split('-')[0])
+        );
+        
+        if (langVoices.length > 0) {
+            // Preferir vozes que não sejam claramente do gênero oposto
+            const oppositeGenderKeywords = gender === 'male' 
+                ? ['female', 'woman', 'maria', 'ana', 'zira', 'susan', 'helena', 'hortense', 'hedda', 'yaoyao']
+                : ['male', 'man', 'david', 'daniel', 'mark', 'alex', 'pablo', 'paul', 'stefan', 'kangkang'];
+            
+            const neutralVoices = langVoices.filter(v => 
+                !oppositeGenderKeywords.some(keyword => 
+                    v.name.toLowerCase().includes(keyword.toLowerCase())
+                )
+            );
+            
+            const selectedVoice = neutralVoices.length > 0 ? neutralVoices[0] : langVoices[0];
+            console.log(`⚠️ Usando fallback: ${selectedVoice.name}`);
+            return selectedVoice;
+        }
+        
+        // Último recurso: primeira voz disponível
+        if (voices.length > 0) {
+            console.log(`❌ Último recurso: ${voices[0].name}`);
+            return voices[0];
+        }
+        
+        console.error('❌ Nenhuma voz disponível no sistema!');
+        return null;
     }
 
     speakTranslation(text, language, forceGender = null) {
@@ -1197,24 +1348,30 @@ class NeuroTranslatorWeb {
             const voiceGenderSelect = document.getElementById('voiceGender');
             const selectedGender = forceGender || (voiceGenderSelect ? voiceGenderSelect.value : 'auto');
             
-            // Usar sistema de vozes fixas
+            // Usar sistema aprimorado de vozes
             let selectedVoice = null;
             
             if (selectedGender === 'auto') {
                 // No modo automático, alternar entre masculino e feminino
                 const autoGender = Math.random() > 0.5 ? 'male' : 'female';
-                selectedVoice = this.getFixedVoice(language, autoGender);
+                selectedVoice = this.getEnhancedVoice(language, autoGender);
                 utterance.pitch = autoGender === 'male' ? 0.8 : 1.2;
+                console.log(`🎲 Modo automático: ${autoGender}`);
             } else {
-                selectedVoice = this.getFixedVoice(language, selectedGender);
-                utterance.pitch = selectedGender === 'male' ? 0.8 : 1.2;
+                selectedVoice = this.getEnhancedVoice(language, selectedGender);
+                // Ajustar pitch baseado no gênero para melhor diferenciação
+                utterance.pitch = selectedGender === 'male' ? 0.7 : 1.3;
             }
             
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
-                console.log('🎯 Voz fixa selecionada:', selectedVoice.name, selectedVoice.lang, `(${selectedGender})`);
+                console.log(`🎯 Voz selecionada: ${selectedVoice.name} (${selectedVoice.lang}) - Gênero: ${selectedGender}`);
+                
+                // Mostrar feedback visual
+                this.showVoiceStatus(`🔊 ${selectedVoice.name.split(' - ')[0]} (${selectedGender === 'male' ? 'Masculina' : 'Feminina'})`);
             } else {
-                console.warn('⚠️ Nenhuma voz encontrada para', language, selectedGender);
+                console.warn('⚠️ Nenhuma voz encontrada, usando padrão do sistema');
+                this.showVoiceStatus('⚠️ Usando voz padrão do sistema');
             }
             
             // Armazenar última tradução para repetição
@@ -1224,9 +1381,9 @@ class NeuroTranslatorWeb {
                 gender: selectedGender
             };
             
-            // Eventos de controle
+            // Eventos de controle aprimorados
             utterance.onstart = () => {
-                console.log('🔊 Iniciando síntese de voz:', text);
+                console.log('🔊 Iniciando síntese de voz:', text.substring(0, 50) + '...');
                 this.elements.speechStatus.textContent = '🔊 Falando tradução...';
                 
                 // Desabilitar botão de repetir durante a fala
@@ -1252,6 +1409,7 @@ class NeuroTranslatorWeb {
             utterance.onerror = (event) => {
                 console.error('❌ Erro na síntese de voz:', event.error);
                 this.elements.speechStatus.textContent = '❌ Erro na síntese de voz';
+                this.showVoiceStatus('❌ Erro na síntese de voz');
                 
                 // Reabilitar botão de repetir em caso de erro
                 const repeatBtn = document.getElementById('repeatSpeech');
@@ -1261,7 +1419,7 @@ class NeuroTranslatorWeb {
                 }
             };
             
-            console.log('🔊 Falando tradução:', text);
+            console.log('🔊 Iniciando reprodução da tradução');
             speechSynthesis.speak(utterance);
         } else {
             console.warn('⚠️ Speech Synthesis não suportado');
@@ -1351,6 +1509,85 @@ class NeuroTranslatorWeb {
                     sendManualCommand();
                 }
             });
+        }
+    }
+    
+    // Método para mostrar status da voz selecionada
+    showVoiceStatus(message, type = 'info') {
+        console.log(`🎤 Status da voz: ${message}`);
+        
+        // Tentar encontrar elemento de status de voz
+        let statusElement = document.getElementById('voice-status');
+        
+        // Se não existir, criar um elemento temporário
+        if (!statusElement) {
+            statusElement = document.createElement('div');
+            statusElement.id = 'voice-status';
+            statusElement.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 15px;
+                border-radius: 5px;
+                color: white;
+                font-size: 14px;
+                z-index: 1000;
+                max-width: 300px;
+                word-wrap: break-word;
+                transition: all 0.3s ease;
+            `;
+            document.body.appendChild(statusElement);
+        }
+        
+        // Definir cores baseadas no tipo
+        const colors = {
+            'info': '#2196F3',
+            'success': '#4CAF50',
+            'warning': '#FF9800',
+            'error': '#F44336'
+        };
+        
+        statusElement.style.backgroundColor = colors[type] || colors['info'];
+        statusElement.textContent = message;
+        statusElement.style.display = 'block';
+        statusElement.style.opacity = '1';
+        
+        // Remover automaticamente após 3 segundos
+        setTimeout(() => {
+            if (statusElement) {
+                statusElement.style.opacity = '0';
+                setTimeout(() => {
+                    if (statusElement && statusElement.parentNode) {
+                        statusElement.parentNode.removeChild(statusElement);
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
+
+    // Método para atualizar o indicador visual de status da voz
+    updateVoiceStatusIndicator(gender) {
+        const indicator = document.getElementById('voiceStatusIndicator');
+        const tooltip = document.getElementById('voiceTooltip');
+        
+        if (indicator && tooltip) {
+            // Atualizar indicador visual
+            indicator.classList.add('active');
+            
+            // Atualizar tooltip baseado no gênero selecionado
+            const tooltipMessages = {
+                'auto': 'Modo automático: Alterna entre vozes masculinas e femininas',
+                'male': 'Modo masculino: Priorizando vozes masculinas',
+                'female': 'Modo feminino: Priorizando vozes femininas'
+            };
+            
+            tooltip.textContent = tooltipMessages[gender] || 'Sistema de vozes ativo';
+            
+            // Feedback visual temporário
+            indicator.style.animation = 'none';
+            setTimeout(() => {
+                indicator.style.animation = '';
+            }, 100);
         }
     }
     
