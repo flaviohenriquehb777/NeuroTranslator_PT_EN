@@ -224,14 +224,6 @@ python -m pytest tests/test_translation.py
 - Atualize a documentação quando necessário
 - Use commits semânticos
 
-## 📞 Contato
-
-Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
-
-- **Nome:** Flávio Henrique Barbosa
-- **LinkedIn:** https://www.linkedin.com/in/fl%C3%A1vio-henrique-barbosa-38465938
-- **Email:** flaviohenriquehb777@outlook.com
-
 ## 📄 Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE.md](LICENSE.md) para detalhes.
@@ -242,6 +234,18 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE.md](L
 - **Google** - Web Speech API
 - **Mozilla** - Ferramentas de desenvolvimento web
 - **Comunidade Open Source** - Bibliotecas e frameworks utilizados
+
+---
+
+## 📞 Contato
+
+Se tiver alguma dúvida, sugestão ou quiser colaborar, sinta-se à vontade para entrar em contato:
+
+• **Nome:** Flávio Henrique Barbosa
+
+• **LinkedIn:** [Flávio Henrique Barbosa | LinkedIn](https://www.linkedin.com/in/fl%C3%A1vio-henrique-barbosa-38465938)
+
+• **Email:** [flaviohenriquehb777@outlook.com](mailto:flaviohenriquehb777@outlook.com)
 
 ---
 
