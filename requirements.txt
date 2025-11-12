@@ -1,3 +1,4 @@
+# ===== TRADUÇÃO E NLP =====
 customtkinter==5.2.2
 transformers==4.36.2
 torch==2.1.2
@@ -49,48 +50,34 @@ pyautogui>=0.9.54
 pynput>=1.7.6
 colorama>=0.4.6
 
-# ===== DATA VISUALIZATION =====
-matplotlib>=3.7.0
-seaborn>=0.12.0
-plotly>=5.15.0
+# ===== MELHORIAS MULTILÍNGUES =====
+# Suporte adicional para Japonês, Italiano e Russo
+transformers>=4.36.2  # Modelos Helsinki-NLP atualizados
+torch>=2.1.2         # PyTorch com suporte CUDA
+sentencepiece>=0.1.99 # Tokenizador para idiomas asiáticos
+sacremoses>=0.1.1     # Pré-processamento de texto
+langdetect>=1.0.9     # Detecção aprimorada de idiomas
 
-# ===== DEVELOPMENT TOOLS =====
-jupyter>=1.0.0
-jupyterlab>=4.0.0
-ipywidgets>=8.0.0
-notebook>=7.0.0
-pytest>=7.4.0
-pytest-cov>=4.1.0
-black>=23.7.0
-flake8>=6.0.0
-mypy>=1.5.0
+# ===== PERFORMANCE & CACHE =====
+lru-dict>=1.2.0       # Cache LRU para performance
+diskcache>=5.6.3      # Cache em disco persistente
+redis>=5.0.0          # Cache distribuído (opcional)
 
-# ===== UTILITIES =====
-tqdm>=4.65.0
-python-dotenv>=1.0.0
-pyyaml>=6.0.0
-jsonschema>=4.18.0
-click>=8.1.0
-rich>=13.4.0
+# ===== MONITORAMENTO E LOGS =====
+loguru>=0.7.2         # Logging avançado
+prometheus-client>=0.19.0 # Métricas de performance
 
-# ===== PERFORMANCE MONITORING =====
-memory-profiler>=0.61.0
-line-profiler>=4.1.0
+# ===== SEGURANÇA =====
+cryptography>=41.0.7  # Criptografia de dados
+python-jose>=3.3.0    # JWT para autenticação
 
-# ===== PLATFORM SPECIFIC =====
-# Windows
-pywin32>=306; sys_platform == "win32"
+# ===== DESENVOLVIMENTO E TESTES =====
+pytest>=7.4.0         # Framework de testes
+pytest-cov>=4.1.0     # Cobertura de testes
+black>=23.12.0        # Formatação de código
+flake8>=7.0.0         # Linting de código
+mypy>=1.8.0           # Type checking
 
-# ===== INSTALLATION NOTES =====
-# 1. Instalar: pip install -r requirements.txt
-# 2. Para GPU: pip install torch --index-url https://download.pytorch.org/whl/cu118
-# 3. Sistema (Ubuntu): sudo apt-get install python3-dev portaudio19-dev ffmpeg
-# 4. Sistema (Windows): Instalar Visual C++ Build Tools e FFmpeg
-onnx>=1.14.0
-onnxruntime>=1.15.0
-tensorrt>=8.6.0
-
-# Cloud Services (Optional)
-google-cloud-translate>=3.11.0
-azure-translator-text>=3.0.0
-boto3>=1.28.0
+# ===== DEPENDÊNCIAS OPCIONAIS PARA GPU =====
+# torch-audio>=2.1.2  # Áudio com CUDA (já incluído)
+# nvidia-ml-py>=12.535.0 # Monitoramento GPU NVIDIA

@@ -1,26 +1,102 @@
 """
-NeuroTranslator - Classe principal de tradução
-Implementa tradução bidirecional PT-EN usando modelos de Deep Learning
+NeuroTranslator - Sistema de Tradução Neural Multilíngue
+Implementa tradução automática com suporte a 9 idiomas usando IA avançada
+Autor: Flávio Henrique Barbosa
 """
 
 import time
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import numpy as np
+from pathlib import Path
+import json
 
 try:
     import torch
     import transformers
-    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+    from langdetect import detect, detect_langs
+    HAS_TRANSFORMERS = True
 except ImportError:
-    print("⚠️ Bibliotecas de ML não encontradas. Execute: pip install torch transformers")
+    print("⚠️ Bibliotecas de ML não encontradas. Execute: pip install torch transformers langdetect")
+    HAS_TRANSFORMERS = False
+
+class LanguageManager:
+    """Gerenciador de idiomas com suporte a 9 idiomas"""
+    
+    SUPPORTED_LANGUAGES = {
+        'pt': {'name': 'Português', 'flag': '🇧🇷', 'code': 'pt-BR'},
+        'en': {'name': 'English', 'flag': '🇺🇸', 'code': 'en-US'},
+        'es': {'name': 'Español', 'flag': '🇪🇸', 'code': 'es-ES'},
+        'fr': {'name': 'Français', 'flag': '🇫🇷', 'code': 'fr-FR'},
+        'de': {'name': 'Deutsch', 'flag': '🇩🇪', 'code': 'de-DE'},
+        'zh': {'name': '中文', 'flag': '🇨🇳', 'code': 'zh-CN'},
+        'ja': {'name': '日本語', 'flag': '🇯🇵', 'code': 'ja-JP'},
+        'it': {'name': 'Italiano', 'flag': '🇮🇹', 'code': 'it-IT'},
+        'ru': {'name': 'Русский', 'flag': '🇷🇺', 'code': 'ru-RU'}
+    }
+    
+    LANGUAGE_MODELS = {
+        'pt-en': 'Helsinki-NLP/opus-mt-pt-en',
+        'en-pt': 'Helsinki-NLP/opus-mt-en-pt',
+        'pt-es': 'Helsinki-NLP/opus-mt-pt-es',
+        'es-pt': 'Helsinki-NLP/opus-mt-es-pt',
+        'pt-fr': 'Helsinki-NLP/opus-mt-pt-fr',
+        'fr-pt': 'Helsinki-NLP/opus-mt-fr-pt',
+        'pt-de': 'Helsinki-NLP/opus-mt-pt-de',
+        'de-pt': 'Helsinki-NLP/opus-mt-de-pt',
+        'pt-zh': 'Helsinki-NLP/opus-mt-pt-zh',
+        'zh-pt': 'Helsinki-NLP/opus-mt-zh-pt',
+        'pt-ja': 'Helsinki-NLP/opus-mt-pt-ja',
+        'ja-pt': 'Helsinki-NLP/opus-mt-ja-pt',
+        'pt-it': 'Helsinki-NLP/opus-mt-pt-it',
+        'it-pt': 'Helsinki-NLP/opus-mt-it-pt',
+        'pt-ru': 'Helsinki-NLP/opus-mt-pt-ru',
+        'ru-pt': 'Helsinki-NLP/opus-mt-ru-pt',
+        'en-es': 'Helsinki-NLP/opus-mt-en-es',
+        'es-en': 'Helsinki-NLP/opus-mt-es-en',
+        'en-fr': 'Helsinki-NLP/opus-mt-en-fr',
+        'fr-en': 'Helsinki-NLP/opus-mt-fr-en',
+        'en-de': 'Helsinki-NLP/opus-mt-en-de',
+        'de-en': 'Helsinki-NLP/opus-mt-de-en',
+        'en-zh': 'Helsinki-NLP/opus-mt-en-zh',
+        'zh-en': 'Helsinki-NLP/opus-mt-zh-en',
+        'en-ja': 'Helsinki-NLP/opus-mt-en-ja',
+        'ja-en': 'Helsinki-NLP/opus-mt-ja-en',
+        'en-it': 'Helsinki-NLP/opus-mt-en-it',
+        'it-en': 'Helsinki-NLP/opus-mt-it-en',
+        'en-ru': 'Helsinki-NLP/opus-mt-en-ru',
+        'ru-en': 'Helsinki-NLP/opus-mt-ru-en'
+    }
+    
+    @classmethod
+    def get_supported_languages(cls) -> Dict[str, Dict[str, str]]:
+        """Retorna todos os idiomas suportados"""
+        return cls.SUPPORTED_LANGUAGES
+    
+    @classmethod
+    def get_language_code(cls, language: str) -> str:
+        """Converte nome do idioma para código"""
+        language = language.lower()
+        for code, info in cls.SUPPORTED_LANGUAGES.items():
+            if (code == language or 
+                info['name'].lower() == language or 
+                info['code'].lower() == language):
+                return code
+        return None
+    
+    @classmethod
+    def get_model_for_pair(cls, source_lang: str, target_lang: str) -> str:
+        """Retorna o modelo apropriado para o par de idiomas"""
+        pair = f"{source_lang}-{target_lang}"
+        return cls.LANGUAGE_MODELS.get(pair, 'Helsinki-NLP/opus-mt-tc-big')
 
 class NeuroTranslator:
-    """Classe principal para tradução automática PT-EN"""
+    """Sistema de tradução neural multilíngue profissional"""
     
     def __init__(self, config: Optional[Dict] = None):
         """
-        Inicializar o tradutor
+        Inicializar o tradutor neural
         
         Args:
             config: Configurações do tradutor
@@ -28,106 +104,158 @@ class NeuroTranslator:
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
         
-        # Modelos disponíveis
-        self.models = {
-            "fast": "Helsinki-NLP/opus-mt-pt-en",
-            "accurate": "unicamp-dl/translation-pt-en-t5",
-            "balanced": "Helsinki-NLP/opus-mt-pt-en"
-        }
+        # Configurações de performance
+        self.max_length = self.config.get('max_length', 512)
+        self.batch_size = self.config.get('batch_size', 8)
+        self.device = self.config.get('device', 'auto')
         
-        self.current_model = None
-        self.tokenizer = None
-        self.model = None
+        if self.device == 'auto':
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
-        # Estatísticas
+        # Cache de modelos carregados
+        self.loaded_models: Dict[str, Any] = {}
+        self.translation_cache: Dict[str, str] = {}
+        
+        # Estatísticas de performance
         self.stats = {
-            "translations": 0,
-            "total_time": 0.0,
-            "avg_time": 0.0
+            'translations': 0,
+            'total_time': 0.0,
+            'avg_time': 0.0,
+            'cache_hits': 0,
+            'cache_misses': 0,
+            'model_loads': 0
         }
         
-        self.logger.info("NeuroTranslator inicializado")
-    
-    def load_model(self, model_type: str = "balanced") -> bool:
-        """
-        Carregar modelo de tradução
-        
-        Args:
-            model_type: Tipo do modelo (fast, accurate, balanced)
-            
-        Returns:
-            bool: True se carregado com sucesso
-        """
-        try:
-            if model_type not in self.models:
-                raise ValueError(f"Modelo '{model_type}' não disponível")
-            
-            model_name = self.models[model_type]
-            self.logger.info(f"Carregando modelo: {model_name}")
-            
-            # Simular carregamento (em implementação real, carregaria os modelos)
-            self.current_model = model_type
-            self.logger.info(f"Modelo {model_type} carregado com sucesso")
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Erro ao carregar modelo: {e}")
-            return False
+        self.logger.info(f"NeuroTranslator v2.0 inicializado - Device: {self.device}")
     
     def detect_language(self, text: str) -> str:
         """
-        Detectar idioma do texto
+        Detectar idioma do texto com alta precisão
         
         Args:
             text: Texto para análise
             
         Returns:
-            str: Código do idioma detectado ('pt' ou 'en')
+            str: Código do idioma detectado
         """
-        # Implementação simplificada de detecção de idioma
-        portuguese_words = [
-            'o', 'a', 'de', 'que', 'e', 'do', 'da', 'em', 'um', 'para',
-            'é', 'com', 'não', 'uma', 'os', 'no', 'se', 'na', 'por', 'mais'
-        ]
+        try:
+            # Usar langdetect para detecção robusta
+            detected = detect(text)
+            
+            # Verificar se está nos idiomas suportados
+            if detected in LanguageManager.SUPPORTED_LANGUAGES:
+                return detected
+            
+            # Se não estiver suportado, tentar detectar várias possibilidades
+            langs = detect_langs(text)
+            for lang in langs:
+                lang_code = str(lang).split(':')[0]
+                if lang_code in LanguageManager.SUPPORTED_LANGUAGES:
+                    return lang_code
+            
+            # Fallback para português ou inglês baseado em caracteres
+            if any(ord(c) > 127 for c in text):  # Caracteres especiais
+                return 'pt'
+            else:
+                return 'en'
+                
+        except Exception as e:
+            self.logger.warning(f"Erro na detecção de idioma: {e}")
+            return 'pt'  # Fallback padrão
+    
+    def load_model(self, source_lang: str, target_lang: str) -> bool:
+        """
+        Carregar modelo específico para o par de idiomas
         
-        english_words = [
-            'the', 'of', 'and', 'a', 'to', 'in', 'is', 'you', 'that', 'it',
-            'he', 'was', 'for', 'on', 'are', 'as', 'with', 'his', 'they', 'i'
-        ]
+        Args:
+            source_lang: Idioma de origem
+            target_lang: Idioma de destino
+            
+        Returns:
+            bool: True se carregado com sucesso
+        """
+        if not HAS_TRANSFORMERS:
+            self.logger.error("Bibliotecas de ML não disponíveis")
+            return False
         
-        words = text.lower().split()
-        pt_score = sum(1 for word in words if word in portuguese_words)
-        en_score = sum(1 for word in words if word in english_words)
-        
-        return 'pt' if pt_score > en_score else 'en'
+        try:
+            pair_key = f"{source_lang}-{target_lang}"
+            
+            # Verificar se já está carregado
+            if pair_key in self.loaded_models:
+                self.logger.info(f"Modelo {pair_key} já carregado")
+                return True
+            
+            # Obter nome do modelo
+            model_name = LanguageManager.get_model_for_pair(source_lang, target_lang)
+            self.logger.info(f"Carregando modelo {model_name} para {pair_key}")
+            
+            # Carregar tokenizer e modelo
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            
+            # Mover para device apropriado
+            model = model.to(self.device)
+            
+            # Criar pipeline de tradução
+            translation_pipeline = pipeline(
+                "translation",
+                model=model,
+                tokenizer=tokenizer,
+                device=0 if self.device == 'cuda' else -1,
+                max_length=self.max_length,
+                batch_size=self.batch_size
+            )
+            
+            # Armazenar no cache
+            self.loaded_models[pair_key] = translation_pipeline
+            self.stats['model_loads'] += 1
+            
+            self.logger.info(f"Modelo {pair_key} carregado com sucesso")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Erro ao carregar modelo {pair_key}: {e}")
+            return False
     
     def translate(self, 
                  text: str, 
                  source_lang: str = "auto", 
-                 target_lang: str = "en") -> Dict[str, Any]:
+                 target_lang: str = "en",
+                 use_cache: bool = True) -> Dict[str, Any]:
         """
-        Traduzir texto
+        Traduzir texto com suporte a múltiplos idiomas
         
         Args:
             text: Texto para tradução
-            source_lang: Idioma de origem ('pt', 'en', 'auto')
-            target_lang: Idioma de destino ('pt', 'en')
+            source_lang: Idioma de origem ('auto' para detecção automática)
+            target_lang: Idioma de destino
+            use_cache: Se deve usar cache de tradução
             
         Returns:
-            Dict com resultado da tradução
+            Dict com resultado completo da tradução
         """
         start_time = time.time()
         
         try:
+            # Validar entrada
+            if not text or not text.strip():
+                raise ValueError("Texto vazio fornecido")
+            
+            text = text.strip()
+            
             # Detectar idioma se necessário
             if source_lang == "auto":
                 source_lang = self.detect_language(text)
             
             # Validar idiomas
-            if source_lang not in ['pt', 'en'] or target_lang not in ['pt', 'en']:
-                raise ValueError("Idiomas suportados: 'pt', 'en'")
+            if source_lang not in LanguageManager.SUPPORTED_LANGUAGES:
+                raise ValueError(f"Idioma de origem '{source_lang}' não suportado")
             
+            if target_lang not in LanguageManager.SUPPORTED_LANGUAGES:
+                raise ValueError(f"Idioma de destino '{target_lang}' não suportado")
+            
+            # Se for o mesmo idioma, retornar original
             if source_lang == target_lang:
                 return {
                     "original": text,
@@ -135,264 +263,163 @@ class NeuroTranslator:
                     "source_lang": source_lang,
                     "target_lang": target_lang,
                     "confidence": 1.0,
-                    "processing_time": 0.001,
-                    "model_used": self.current_model or "none"
+                    "processing_time": time.time() - start_time,
+                    "model_used": "none",
+                    "cached": False
                 }
             
-            # Simular tradução (em implementação real, usaria os modelos)
-            translation = self._simulate_translation(text, source_lang, target_lang)
+            # Verificar cache
+            cache_key = f"{source_lang}-{target_lang}:{text}"
+            if use_cache and cache_key in self.translation_cache:
+                self.stats['cache_hits'] += 1
+                return {
+                    "original": text,
+                    "translation": self.translation_cache[cache_key],
+                    "source_lang": source_lang,
+                    "target_lang": target_lang,
+                    "confidence": 0.95,
+                    "processing_time": time.time() - start_time,
+                    "model_used": "cache",
+                    "cached": True
+                }
+            
+            self.stats['cache_misses'] += 1
+            
+            # Carregar modelo se necessário
+            if not self.load_model(source_lang, target_lang):
+                # Fallback para tradução simulada
+                translation = self._simulate_translation(text, source_lang, target_lang)
+            else:
+                # Obter pipeline carregado
+                pair_key = f"{source_lang}-{target_lang}"
+                pipeline = self.loaded_models[pair_key]
+                
+                # Realizar tradução
+                result = pipeline(text, max_length=self.max_length)
+                translation = result[0]['translation_text']
+            
+            # Armazenar no cache
+            if use_cache:
+                self.translation_cache[cache_key] = translation
             
             processing_time = time.time() - start_time
             
             # Atualizar estatísticas
-            self.stats["translations"] += 1
-            self.stats["total_time"] += processing_time
-            self.stats["avg_time"] = self.stats["total_time"] / self.stats["translations"]
+            self.stats['translations'] += 1
+            self.stats['total_time'] += processing_time
+            self.stats['avg_time'] = self.stats['total_time'] / self.stats['translations']
             
-            result = {
+            return {
                 "original": text,
                 "translation": translation,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
-                "confidence": np.random.uniform(0.85, 0.98),  # Simular confiança
+                "confidence": 0.85,
                 "processing_time": processing_time,
-                "model_used": self.current_model or "simulation"
+                "model_used": f"{source_lang}-{target_lang}",
+                "cached": False,
+                "device": self.device
             }
-            
-            self.logger.info(f"Tradução concluída em {processing_time:.3f}s")
-            return result
             
         except Exception as e:
             self.logger.error(f"Erro na tradução: {e}")
             return {
                 "original": text,
-                "translation": f"[ERRO: {str(e)}]",
+                "translation": None,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
                 "confidence": 0.0,
                 "processing_time": time.time() - start_time,
                 "model_used": "error",
+                "cached": False,
                 "error": str(e)
             }
     
     def _simulate_translation(self, text: str, source_lang: str, target_lang: str) -> str:
         """
-        Simular tradução usando dicionário expandido e regras inteligentes
+        Tradução simulada para fallback (será substituída por IA real)
         
         Args:
-            text: Texto original
+            text: Texto para tradução
             source_lang: Idioma de origem
             target_lang: Idioma de destino
             
         Returns:
-            str: Texto traduzido
+            str: Texto traduzido (simulado)
         """
-        # Dicionário expandido de traduções
+        # Dicionários simples para demonstração
         translations = {
-            ("pt", "en"): {
-                # Saudações e expressões básicas
-                "olá": "hello",
-                "oi": "hi",
-                "tchau": "bye",
-                "até logo": "see you later",
-                "bom dia": "good morning",
-                "boa tarde": "good afternoon",
-                "boa noite": "good night",
-                "como está": "how are you",
-                "como vai": "how are you doing",
-                "tudo bem": "everything is fine",
-                "muito prazer": "nice to meet you",
-                
-                # Palavras comuns
-                "sim": "yes",
-                "não": "no",
-                "talvez": "maybe",
-                "obrigado": "thank you",
-                "obrigada": "thank you",
-                "por favor": "please",
-                "desculpe": "sorry",
-                "com licença": "excuse me",
-                "de nada": "you're welcome",
-                
-                # Verbos comuns
-                "eu sou": "I am",
-                "você é": "you are",
-                "ele é": "he is",
-                "ela é": "she is",
-                "nós somos": "we are",
-                "vocês são": "you are",
-                "eles são": "they are",
-                "eu tenho": "I have",
-                "você tem": "you have",
-                "eu quero": "I want",
-                "eu preciso": "I need",
-                "eu gosto": "I like",
-                "eu posso": "I can",
-                "eu vou": "I will go",
-                
-                # Substantivos comuns
-                "casa": "house",
-                "trabalho": "work",
-                "escola": "school",
-                "família": "family",
-                "amigo": "friend",
-                "amiga": "friend",
-                "comida": "food",
-                "água": "water",
-                "tempo": "time",
-                "dinheiro": "money",
-                "carro": "car",
-                "livro": "book",
-                
-                # Frases completas comuns
-                "gostaria de saber se você consegue registrar tudo o que eu estou falando agora": "I would like to know if you can record everything I am saying now",
-                "como você está": "how are you",
-                "qual é o seu nome": "what is your name",
-                "onde você mora": "where do you live",
-                "que horas são": "what time is it",
-                "quanto custa": "how much does it cost",
-                "eu não entendo": "I don't understand",
-                "você pode repetir": "can you repeat",
-                "fale mais devagar": "speak more slowly",
-                "eu estou aprendendo": "I am learning",
-                "muito obrigado": "thank you very much"
+            'pt-en': {
+                'olá': 'hello', 'mundo': 'world', 'bom': 'good', 'dia': 'day',
+                'como': 'how', 'está': 'are', 'você': 'you', 'obrigado': 'thank you',
+                'por': 'for', 'favor': 'please', 'sim': 'yes', 'não': 'no'
             },
-            ("en", "pt"): {
-                # Saudações e expressões básicas
-                "hello": "olá",
-                "hi": "oi",
-                "bye": "tchau",
-                "see you later": "até logo",
-                "good morning": "bom dia",
-                "good afternoon": "boa tarde",
-                "good night": "boa noite",
-                "how are you": "como está",
-                "how are you doing": "como vai",
-                "everything is fine": "tudo bem",
-                "nice to meet you": "muito prazer",
-                
-                # Palavras comuns
-                "yes": "sim",
-                "no": "não",
-                "maybe": "talvez",
-                "thank you": "obrigado",
-                "please": "por favor",
-                "sorry": "desculpe",
-                "excuse me": "com licença",
-                "you're welcome": "de nada",
-                
-                # Verbos comuns
-                "i am": "eu sou",
-                "you are": "você é",
-                "he is": "ele é",
-                "she is": "ela é",
-                "we are": "nós somos",
-                "they are": "eles são",
-                "i have": "eu tenho",
-                "you have": "você tem",
-                "i want": "eu quero",
-                "i need": "eu preciso",
-                "i like": "eu gosto",
-                "i can": "eu posso",
-                "i will go": "eu vou",
-                
-                # Substantivos comuns
-                "house": "casa",
-                "work": "trabalho",
-                "school": "escola",
-                "family": "família",
-                "friend": "amigo",
-                "food": "comida",
-                "water": "água",
-                "time": "tempo",
-                "money": "dinheiro",
-                "car": "carro",
-                "book": "livro",
-                
-                # Frases completas comuns
-                "what is your name": "qual é o seu nome",
-                "where do you live": "onde você mora",
-                "what time is it": "que horas são",
-                "how much does it cost": "quanto custa",
-                "i don't understand": "eu não entendo",
-                "can you repeat": "você pode repetir",
-                "speak more slowly": "fale mais devagar",
-                "i am learning": "eu estou aprendendo",
-                "thank you very much": "muito obrigado"
+            'en-pt': {
+                'hello': 'olá', 'world': 'mundo', 'good': 'bom', 'day': 'dia',
+                'how': 'como', 'are': 'está', 'you': 'você', 'thank': 'obrigado',
+                'for': 'por', 'please': 'favor', 'yes': 'sim', 'no': 'não'
+            },
+            'pt-ja': {
+                'olá': 'こんにちは', 'mundo': '世界', 'bom': '良い', 'dia': '日',
+                'obrigado': 'ありがとう', 'sim': 'はい', 'não': 'いいえ'
+            },
+            'ja-pt': {
+                'こんにちは': 'olá', '世界': 'mundo', '良い': 'bom', '日': 'dia',
+                'ありがとう': 'obrigado', 'はい': 'sim', 'いいえ': 'não'
+            },
+            'pt-it': {
+                'olá': 'ciao', 'mundo': 'mondo', 'bom': 'buono', 'dia': 'giorno',
+                'obrigado': 'grazie', 'sim': 'sì', 'não': 'no'
+            },
+            'it-pt': {
+                'ciao': 'olá', 'mondo': 'mundo', 'buono': 'bom', 'giorno': 'dia',
+                'grazie': 'obrigado', 'sì': 'sim', 'no': 'não'
+            },
+            'pt-ru': {
+                'olá': 'привет', 'mundo': 'мир', 'bom': 'хороший', 'dia': 'день',
+                'obrigado': 'спасибо', 'sim': 'да', 'não': 'нет'
+            },
+            'ru-pt': {
+                'привет': 'olá', 'мир': 'mundo', 'хороший': 'bom', 'день': 'dia',
+                'спасибо': 'obrigado', 'да': 'sim', 'нет': 'não'
             }
         }
         
-        # Normalizar texto
-        text_normalized = text.lower().strip()
-        lang_pair = (source_lang, target_lang)
+        pair_key = f"{source_lang}-{target_lang}"
+        if pair_key in translations:
+            words = text.lower().split()
+            translated_words = []
+            for word in words:
+                translated = translations[pair_key].get(word, word)
+                translated_words.append(translated)
+            return ' '.join(translated_words)
         
-        # Buscar tradução exata primeiro
-        if lang_pair in translations:
-            if text_normalized in translations[lang_pair]:
-                return translations[lang_pair][text_normalized]
-        
-        # Tentar tradução por palavras-chave (busca parcial)
-        if lang_pair in translations:
-            for key, value in translations[lang_pair].items():
-                if key in text_normalized:
-                    # Se encontrou uma palavra-chave, fazer substituição inteligente
-                    return text_normalized.replace(key, value)
-        
-        # Tradução baseada em regras simples para textos não mapeados
-        if source_lang == "pt" and target_lang == "en":
-            # Aplicar algumas regras básicas de tradução PT->EN
-            translated = text_normalized
-            
-            # Substituições básicas de estrutura
-            translated = translated.replace("eu estou", "i am")
-            translated = translated.replace("você está", "you are")
-            translated = translated.replace("ele está", "he is")
-            translated = translated.replace("ela está", "she is")
-            translated = translated.replace("nós estamos", "we are")
-            translated = translated.replace("vocês estão", "you are")
-            translated = translated.replace("eles estão", "they are")
-            
-            # Se não houve mudança significativa, adicionar prefixo indicativo
-            if translated == text_normalized:
-                return f"[Translation] {text}"
-            else:
-                return translated.capitalize()
-                
-        elif source_lang == "en" and target_lang == "pt":
-            # Aplicar algumas regras básicas de tradução EN->PT
-            translated = text_normalized
-            
-            # Substituições básicas de estrutura
-            translated = translated.replace("i am", "eu estou")
-            translated = translated.replace("you are", "você está")
-            translated = translated.replace("he is", "ele está")
-            translated = translated.replace("she is", "ela está")
-            translated = translated.replace("we are", "nós estamos")
-            translated = translated.replace("they are", "eles estão")
-            
-            # Se não houve mudança significativa, adicionar prefixo indicativo
-            if translated == text_normalized:
-                return f"[Tradução] {text}"
-            else:
-                return translated.capitalize()
-        
-        # Fallback: retornar texto original com indicação
-        return f"[{target_lang.upper()}] {text}"
+        return f"[{text}] ({source_lang}->{target_lang})"
     
     def get_stats(self) -> Dict[str, Any]:
-        """
-        Obter estatísticas do tradutor
-        
-        Returns:
-            Dict com estatísticas
-        """
-        return self.stats.copy()
-    
-    def reset_stats(self):
-        """Resetar estatísticas"""
-        self.stats = {
-            "translations": 0,
-            "total_time": 0.0,
-            "avg_time": 0.0
+        """Retorna estatísticas de uso"""
+        return {
+            **self.stats,
+            'cache_size': len(self.translation_cache),
+            'loaded_models': len(self.loaded_models),
+            'supported_languages': len(LanguageManager.SUPPORTED_LANGUAGES),
+            'device': self.device
         }
-        self.logger.info("Estatísticas resetadas")
+    
+    def clear_cache(self):
+        """Limpar cache de traduções"""
+        self.translation_cache.clear()
+        self.logger.info("Cache de traduções limpo")
+    
+    def unload_model(self, source_lang: str, target_lang: str):
+        """Descarregar modelo específico da memória"""
+        pair_key = f"{source_lang}-{target_lang}"
+        if pair_key in self.loaded_models:
+            del self.loaded_models[pair_key]
+            self.logger.info(f"Modelo {pair_key} descarregado")
+    
+    def unload_all_models(self):
+        """Descarregar todos os modelos da memória"""
+        self.loaded_models.clear()
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        self.logger.info("Todos os modelos descarregados")

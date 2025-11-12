@@ -69,6 +69,60 @@ npx -y @modelcontextprotocol/server-git
 npx -y @modelcontextprotocol/server-puppeteer
 ```
 
+### Redis (Desativado)
+
+Por estabilidade, removemos o Redis da configuração padrão. Se desejar reativar no futuro, consulte a seção abaixo.
+
+#### Como reativar Redis (Upstash)
+
+1) Definir `REDIS_URL` (permanente, escopo do usuário):
+
+```powershell
+$url = "rediss://default:<SENHA>@<HOST>:<PORT>"
+[Environment]::SetEnvironmentVariable('REDIS_URL', $url, 'User')
+```
+
+2) Configuração recomendada (herda `REDIS_URL`):
+
+```json
+{
+  "mcpServers": {
+    "redis": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-redis@latest"],
+      "env": { "REDIS_URL": "${REDIS_URL}" },
+      "transport": "stdio",
+      "description": "Acesso a Redis (Upstash via REDIS_URL)"
+    }
+  }
+}
+```
+
+3) Alternativa (argumento posicional, sem depender do env):
+
+```json
+{
+  "mcpServers": {
+    "redis": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis@latest",
+        "${REDIS_URL}"
+      ],
+      "transport": "stdio",
+      "description": "Acesso a Redis (Upstash via argumento posicional)"
+    }
+  }
+}
+```
+
+4) Dicas e validação:
+- Use sempre `rediss://` (TLS) com Upstash.
+- Reinicie o Trae após definir `REDIS_URL` para herdar o ambiente.
+- Se os logs mostrarem `redis://localhost:6379`, use a alternativa posicional ou reinicie o Trae.
+- Teste rápido no PowerShell: `npx -y @modelcontextprotocol/server-redis@latest "${env:REDIS_URL}"` (deve logar “Successfully connected … upstash.io:6379”).
+
 ## 🔑 Configuração de API Keys
 
 Para usar serviços externos, configure as variáveis de ambiente:
@@ -139,4 +193,4 @@ pip install langchain-mcp-adapters langgraph "langchain[openai]"
 
 ---
 
-**Status**: MCP LangChain instalado e pronto para uso no Trae! 🎉
+**Status**: MCP LangChain instalado e pronto para uso no Trae, sem Redis. 🎉

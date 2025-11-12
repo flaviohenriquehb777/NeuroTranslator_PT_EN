@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "langchain": {
+      "command": "C:\\Users\\flavi\\Anaconda3\\python.exe",
+      "args": ["C:\\Users\\flavi\\MCP_Servers\\langchain_mcp_server.py"],
+      "transport": "stdio",
+      "description": "Servidor MCP simples em Python"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "transport": "stdio",
+      "description": "Operações em arquivos locais"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "transport": "stdio",
+      "description": "Leitura de páginas web públicas"
+    }
+  }
+}

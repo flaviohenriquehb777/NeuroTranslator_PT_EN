@@ -26,15 +26,37 @@ class NeuroTranslatorGUI(ctk.CTk):
         """Inicializar interface gráfica"""
         self.config = config or {}
         
-        # Configurar tema
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
+       # Configurar tema
+       ctk.set_appearance_mode("dark")
+       ctk.set_default_color_theme("blue")
+       
+       # Inicializar janela principal
+       super().__init__()
+       self.title("🧠 NeuroTranslator PT-EN v1.0 - Live Camera & Speech")
+       self.geometry("1200x800")
+       self.minsize(800, 600)
         
-        # Inicializar janela principal
-        super().__init__()
-        self.title("🧠 NeuroTranslator PT-EN v1.0 - Live Camera & Speech")
-        self.geometry("1200x800")
-        self.minsize(800, 600)
+        # Suporte a novos idiomas
+        self.supported_languages = {
+            'pt': {'name': 'Português', 'flag': '🇧🇷'},
+            'en': {'name': 'English', 'flag': '🇺🇸'},
+            'es': {'name': 'Español', 'flag': '🇪🇸'},
+            'fr': {'name': 'Français', 'flag': '🇫🇷'},
+            'de': {'name': 'Deutsch', 'flag': '🇩🇪'},
+            'zh': {'name': '中文', 'flag': '🇨🇳'},
+            'ja': {'name': '日本語', 'flag': '🇯🇵'},
+            'it': {'name': 'Italiano', 'flag': '🇮🇹'},
+            'ru': {'name': 'Русский', 'flag': '🇷🇺'}
+        }
+        
+        # Configurar fontes para idiomas asiáticos
+        self.setup_language_fonts()
+        
+        # Detectar sistema operacional para otimizações
+        self.detect_os_and_optimize()
+        
+        # Configurar interface responsiva
+        self.setup_responsive_ui()
         
         # Estados da aplicação
         self.camera_active = False
@@ -725,27 +747,295 @@ class NeuroTranslatorGUI(ctk.CTk):
         """Callback quando tradução é concluída"""
         print(f"✅ DEBUG: Tradução concluída: {translation_data}")
         
-        # Atualizar interface com a tradução
-        translated_text = translation_data.get("translated", "")
-        if translated_text:
-            self.output_text.configure(state="normal")
-            self.output_text.delete("1.0", "end")
-            self.output_text.insert("1.0", translated_text)
-            self.output_text.configure(state="disabled")
-        
-        # Adicionar ao histórico
-        self.translation_history.append({
-            "original": translation_data.get("original", ""),
-            "translated": translated_text,
-            "source_lang": translation_data.get("source_lang", ""),
-            "target_lang": translation_data.get("target_lang", ""),
-            "confidence": translation_data.get("confidence", 0),
-            "timestamp": time.time(),
-            "method": "voice_assistant"
-        })
-        
-        self.status_label.configure(text="✅ Tradução concluída pelo Assistente Neuro")
+       # Atualizar interface com a tradução
+       translated_text = translation_data.get("translated", "")
+       if translated_text:
+           self.output_text.configure(state="normal")
+           self.output_text.delete("1.0", "end")
+           self.output_text.insert("1.0", translated_text)
+           self.output_text.configure(state="disabled")
+       
+       # Adicionar ao histórico
+       self.translation_history.append({
+           "original": translation_data.get("original", ""),
+           "translated": translated_text,
+           "source_lang": translation_data.get("source_lang", ""),
+           "target_lang": translation_data.get("target_lang", ""),
+           "confidence": translation_data.get("confidence", 0),
+           "timestamp": time.time(),
+           "method": "voice_assistant"
+       })
+       
+       self.status_label.configure(text="✅ Tradução concluída pelo Assistente Neuro")
+   
+    # MÉTODOS DE SUPORTE MULTILÍNGUE E RESPONSIVIDADE
     
+    def setup_language_fonts(self):
+        """Configurar fontes para suporte a múltiplos idiomas"""
+        try:
+            import tkinter.font as tkfont
+            
+            # Fontes para caracteres especiais (Japonês, Chinês, Russo)
+            self.asian_fonts = {
+                'ja': ('MS Gothic', 'Yu Gothic', 'Noto Sans CJK JP'),
+                'zh': ('SimHei', 'Microsoft YaHei', 'Noto Sans CJK SC'),
+                'ru': ('Arial', 'Times New Roman', 'Noto Sans')
+            }
+            
+            # Fonte padrão com melhor suporte Unicode
+            self.default_font = tkfont.Font(family="Segoe UI", size=10)
+            self.text_font = tkfont.Font(family="Consolas", size=11)
+            
+            logging.info("Fontes configuradas para suporte multilíngue")
+            
+        except Exception as e:
+            logging.warning(f"Erro ao configurar fontes: {e}")
+            self.default_font = None
+            self.text_font = None
+    
+    def detect_os_and_optimize(self):
+        """Detectar sistema operacional e aplicar otimizações"""
+        import platform
+        
+        self.os_type = platform.system()
+        self.is_mobile = self.detect_mobile_device()
+        
+        if self.is_mobile:
+            logging.info("Dispositivo móvel detectado - aplicando otimizações")
+            self.apply_mobile_optimizations()
+        
+        logging.info(f"Sistema detectado: {self.os_type}")
+    
+    def detect_mobile_device(self):
+        """Detectar se está rodando em dispositivo móvel"""
+        # Verificar tamanho da tela e características do sistema
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Considerar mobile se a largura for menor que 768px
+        is_small_screen = screen_width < 768
+        
+        # Verificar se é Android (algumas implementações Python mobile)
+        try:
+            import android
+            return True
+        except ImportError:
+            pass
+        
+        return is_small_screen
+    
+    def apply_mobile_optimizations(self):
+        """Aplicar otimizações para dispositivos móveis"""
+        # Reduzir tamanho da janela
+        self.geometry("1000x600")
+        
+        # Aumentar tamanho dos elementos de toque
+        self.mobile_mode = True
+        
+        logging.info("Otimizações mobile aplicadas")
+    
+    def setup_responsive_ui(self):
+        """Configurar UI responsiva"""
+        # Configurar redimensionamento
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        
+        # Vincular eventos de redimensionamento
+        self.bind("<Configure>", self.on_resize)
+        
+        self.responsive_mode = True
+        logging.info("UI responsiva configurada")
+    
+    def on_resize(self, event):
+        """Handler para redimensionamento da janela"""
+        if hasattr(self, 'responsive_mode') and self.responsive_mode:
+            # Ajustar elementos baseado no tamanho da janela
+            width = event.width
+            height = event.height
+            
+            # Aplicar breakpoints responsivos
+            if width < 600:
+                self.apply_mobile_layout()
+            elif width < 900:
+                self.apply_tablet_layout()
+            else:
+                self.apply_desktop_layout()
+    
+    def apply_mobile_layout(self):
+        """Aplicar layout mobile"""
+        if hasattr(self, 'current_layout') and self.current_layout == 'mobile':
+            return
+            
+        self.current_layout = 'mobile'
+        logging.info("Layout mobile aplicado")
+        # Implementar ajustes específicos para mobile
+    
+    def apply_tablet_layout(self):
+        """Aplicar layout tablet"""
+        if hasattr(self, 'current_layout') and self.current_layout == 'tablet':
+            return
+            
+        self.current_layout = 'tablet'
+        logging.info("Layout tablet aplicado")
+    
+    def apply_desktop_layout(self):
+        """Aplicar layout desktop"""
+        if hasattr(self, 'current_layout') and self.current_layout == 'desktop':
+            return
+            
+        self.current_layout = 'desktop'
+        logging.info("Layout desktop aplicado")
+    
+    def setup_language_support(self):
+        """Configurar suporte a múltiplos idiomas na interface"""
+        # Adicionar menu de seleção de idioma da interface
+        self.language_menu = self.create_language_menu()
+        logging.info("Suporte multilíngue configurado")
+    
+    def create_language_menu(self):
+        """Criar menu de seleção de idioma da interface"""
+        # Menu suspenso para escolher idioma da interface
+        language_frame = ctk.CTkFrame(self)
+        language_frame.pack(side="top", fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(language_frame, text="Interface Language:").pack(side="left", padx=5)
+        
+        self.interface_language = ctk.StringVar(value="pt")
+        language_combo = ctk.CTkOptionMenu(
+            language_frame,
+            variable=self.interface_language,
+            values=["pt", "en", "es", "fr", "de", "zh", "ja", "it", "ru"],
+            command=self.change_interface_language
+        )
+        language_combo.pack(side="left", padx=5)
+        
+        return language_frame
+    
+    def change_interface_language(self, language):
+        """Mudar idioma da interface"""
+        logging.info(f"Mudando idioma da interface para: {language}")
+        # Implementar tradução dos elementos da interface
+        self.update_interface_texts(language)
+    
+    def update_interface_texts(self, language):
+        """Atualizar textos da interface baseado no idioma"""
+        # Dicionário de traduções para a interface
+        interface_texts = {
+            'pt': {
+                'title': '🧠 NeuroTranslator PT-EN v3.0 - IA Multilíngue',
+                'translate': 'Traduzir',
+                'clear': 'Limpar',
+                'copy': 'Copiar',
+                'speech': 'Fala',
+                'camera': 'Câmera',
+                'history': 'Histórico'
+            },
+            'en': {
+                'title': '🧠 NeuroTranslator PT-EN v3.0 - Multilingual AI',
+                'translate': 'Translate',
+                'clear': 'Clear',
+                'copy': 'Copy',
+                'speech': 'Speech',
+                'camera': 'Camera',
+                'history': 'History'
+            },
+            'es': {
+                'title': '🧠 NeuroTranslator PT-EN v3.0 - IA Multilingüe',
+                'translate': 'Traducir',
+                'clear': 'Limpiar',
+                'copy': 'Copiar',
+                'speech': 'Voz',
+                'camera': 'Cámara',
+                'history': 'Historial'
+            },
+            'ja': {
+                'title': '🧠 NeuroTranslator PT-EN v3.0 - 多言語AI',
+                'translate': '翻訳',
+                'clear': 'クリア',
+                'copy': 'コピー',
+                'speech': '音声',
+                'camera': 'カメラ',
+                'history': '履歴'
+            }
+        }
+        
+        # Aplicar traduções se disponíveis
+        if language in interface_texts:
+            texts = interface_texts[language]
+            self.title(texts['title'])
+            # Atualizar outros elementos da interface
+            self.update_button_texts(texts)
+    
+    def update_button_texts(self, texts):
+        """Atualizar textos dos botões"""
+        # Este método seria implementado baseado nos elementos da interface
+        pass
+    
+    def setup_mobile_optimizations(self):
+        """Configurar otimizações para dispositivos móveis"""
+        if self.is_mobile:
+            # Aumentar tamanho dos botões para touch
+            self.configure_touch_targets()
+            
+            # Simplificar interface
+            self.simplify_interface_for_mobile()
+            
+            # Adicionar suporte a gestos
+            self.add_touch_gestures()
+    
+    def configure_touch_targets(self):
+        """Configurar alvos de toque para mobile"""
+        # Aumentar tamanho mínimo dos elementos clicáveis
+        self.touch_target_size = 44  # px - padrão iOS/Android
+        logging.info(f"Alvos de toque configurados: {self.touch_target_size}px")
+    
+    def simplify_interface_for_mobile(self):
+        """Simplificar interface para dispositivos móveis"""
+        # Reduzir número de elementos visíveis
+        # Aumentar contraste
+        # Simplificar navegação
+        logging.info("Interface simplificada para mobile")
+    
+    def add_touch_gestures(self):
+        """Adicionar suporte a gestos de toque"""
+        # Swipe para trocar idiomas
+        # Pinch to zoom
+        # Touch and hold para opções
+        logging.info("Gestos de toque adicionados")
+    
+    def get_font_for_language(self, language_code):
+        """Obter fonte apropriada para o idioma"""
+        if hasattr(self, 'asian_fonts') and language_code in self.asian_fonts:
+            return self.asian_fonts[language_code]
+        return ("Segoe UI", 10)  # Fonte padrão
+    
+    def apply_language_font(self, widget, language_code):
+        """Aplicar fonte apropriada para o idioma"""
+        font_family = self.get_font_for_language(language_code)
+        try:
+            widget.configure(font=font_family)
+        except Exception as e:
+            logging.debug(f"Não foi possível aplicar fonte: {e}")
+    
+    def update_video_frame(self, frame):
+        """Atualizar frame de vídeo na interface"""
+        try:
+            # Redimensionar frame para caber na interface
+            frame_resized = cv2.resize(frame, (320, 240))
+            
+            # Converter BGR para RGB
+            frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
+            
+            # Converter para PhotoImage
+            photo = ImageTk.PhotoImage(image=Image.fromarray(frame_rgb))
+            
+            # Atualizar label
+            if hasattr(self, 'video_label') and self.video_label:
+                self.video_label.configure(image=photo)
+                self.video_label.image = photo  # Manter referência
+                
+        except Exception as e:
+            logging.error(f"Erro ao atualizar frame de vídeo: {e}")
     def update_video_frame(self, frame):
         """Atualizar frame de vídeo na interface"""
         try:

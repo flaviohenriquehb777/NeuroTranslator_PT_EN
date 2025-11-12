@@ -1,0 +1,215 @@
+# NeuroTranslator v3.0 - Configuração Multilíngue
+# Autor: Flávio Henrique Barbosa
+# Versão: 3.0 - Suporte a 9 idiomas
+
+# Configurações Gerais
+general:
+  app_name: "NeuroTranslator PT-EN"
+  version: "3.0.0"
+  debug: false
+  log_level: "INFO"
+  
+# Configurações de Idiomas
+languages:
+  supported:
+    - code: "pt"
+      name: "Português"
+      flag: "🇧🇷"
+      locale: "pt-BR"
+      font: "Segoe UI"
+      voice_gender: "female"
+      
+    - code: "en"
+      name: "English"
+      flag: "🇺🇸"
+      locale: "en-US"
+      font: "Segoe UI"
+      voice_gender: "male"
+      
+    - code: "es"
+      name: "Español"
+      flag: "🇪🇸"
+      locale: "es-ES"
+      font: "Segoe UI"
+      voice_gender: "female"
+      
+    - code: "fr"
+      name: "Français"
+      flag: "🇫🇷"
+      locale: "fr-FR"
+      font: "Segoe UI"
+      voice_gender: "female"
+      
+    - code: "de"
+      name: "Deutsch"
+      flag: "🇩🇪"
+      locale: "de-DE"
+      font: "Segoe UI"
+      voice_gender: "male"
+      
+    - code: "zh"
+      name: "中文"
+      flag: "🇨🇳"
+      locale: "zh-CN"
+      font: "SimHei"
+      voice_gender: "female"
+      
+    - code: "ja"
+      name: "日本語"
+      flag: "🇯🇵"
+      locale: "ja-JP"
+      font: "MS Gothic"
+      voice_gender: "female"
+      
+    - code: "it"
+      name: "Italiano"
+      flag: "🇮🇹"
+      locale: "it-IT"
+      font: "Segoe UI"
+      voice_gender: "female"
+      
+    - code: "ru"
+      name: "Русский"
+      flag: "🇷🇺"
+      locale: "ru-RU"
+      font: "Arial"
+      voice_gender: "male"
+  
+  # Configurações de Detecção Automática
+  auto_detect:
+    enabled: true
+    confidence_threshold: 0.8
+    fallback_language: "pt"
+    
+# Configurações de IA e Modelos
+ai:
+  # Modelos Helsinki-NLP para cada par de idiomas
+  models:
+    pt-en: "Helsinki-NLP/opus-mt-pt-en"
+    en-pt: "Helsinki-NLP/opus-mt-en-pt"
+    pt-es: "Helsinki-NLP/opus-mt-pt-es"
+    es-pt: "Helsinki-NLP/opus-mt-es-pt"
+    pt-fr: "Helsinki-NLP/opus-mt-pt-fr"
+    fr-pt: "Helsinki-NLP/opus-mt-fr-pt"
+    pt-de: "Helsinki-NLP/opus-mt-pt-de"
+    de-pt: "Helsinki-NLP/opus-mt-de-pt"
+    pt-zh: "Helsinki-NLP/opus-mt-pt-zh"
+    zh-pt: "Helsinki-NLP/opus-mt-zh-pt"
+    pt-ja: "Helsinki-NLP/opus-mt-pt-ja"
+    ja-pt: "Helsinki-NLP/opus-mt-ja-pt"
+    pt-it: "Helsinki-NLP/opus-mt-pt-it"
+    it-pt: "Helsinki-NLP/opus-mt-it-pt"
+    pt-ru: "Helsinki-NLP/opus-mt-pt-ru"
+    ru-pt: "Helsinki-NLP/opus-mt-ru-pt"
+    en-es: "Helsinki-NLP/opus-mt-en-es"
+    es-en: "Helsinki-NLP/opus-mt-es-en"
+    en-fr: "Helsinki-NLP/opus-mt-en-fr"
+    fr-en: "Helsinki-NLP/opus-mt-fr-en"
+    en-de: "Helsinki-NLP/opus-mt-en-de"
+    de-en: "Helsinki-NLP/opus-mt-de-en"
+    en-zh: "Helsinki-NLP/opus-mt-en-zh"
+    zh-en: "Helsinki-NLP/opus-mt-zh-en"
+    en-ja: "Helsinki-NLP/opus-mt-en-ja"
+    ja-en: "Helsinki-NLP/opus-mt-ja-en"
+    en-it: "Helsinki-NLP/opus-mt-en-it"
+    it-en: "Helsinki-NLP/opus-mt-it-en"
+    en-ru: "Helsinki-NLP/opus-mt-en-ru"
+    ru-en: "Helsinki-NLP/opus-mt-ru-en"
+  
+  # Configurações de Performance
+  performance:
+    max_length: 512
+    batch_size: 8
+    device: "auto"  # auto, cpu, cuda
+    use_cache: true
+    cache_size: 1000
+    cache_ttl: 3600  # segundos
+    
+  # Configurações de Precisão
+  accuracy:
+    confidence_threshold: 0.85
+    retry_attempts: 3
+    timeout: 30  # segundos
+    
+# Configurações de Áudio
+audio:
+  # Reconhecimento de Voz
+  speech_recognition:
+    enabled: true
+    language: "pt-BR"
+    timeout: 5
+    phrase_time_limit: 10
+    
+  # Síntese de Voz
+  speech_synthesis:
+    enabled: true
+    default_voice: "female"
+    rate: 200  # words per minute
+    volume: 0.9
+    
+  # Processamento de Áudio
+  processing:
+    sample_rate: 16000
+    chunk_size: 1024
+    channels: 1
+    format: "int16"
+    
+# Configurações de Interface
+interface:
+  # Desktop
+  desktop:
+    window_width: 1200
+    window_height: 800
+    min_width: 800
+    min_height: 600
+    theme: "dark"
+    
+  # Mobile
+  mobile:
+    responsive_breakpoints:
+      mobile: 768
+      tablet: 1024
+      desktop: 1200
+    touch_target_size: 44  # pixels (iOS/Android standard)
+    
+  # Web
+  web:
+    auto_translate: true
+    show_history: true
+    max_history_items: 50
+    
+# Configurações de Câmera
+camera:
+  enabled: true
+  resolution: "640x480"
+  fps: 30
+  device_id: 0
+  
+# Configurações de Segurança
+security:
+  https_required: true  # Para reconhecimento de voz
+  data_encryption: true
+  api_rate_limit: 100  # requests per minute
+  
+# Configurações de Desenvolvimento
+development:
+  hot_reload: false
+  debug_mode: false
+  profiling: false
+  
+# Configurações de Deploy
+deploy:
+  # GitHub Pages
+  github_pages:
+    branch: "gh-pages"
+    domain: "flaviohenriquehb777.github.io"
+    
+  # Docker
+  docker:
+    image_name: "neurotranslator"
+    port: 8000
+    
+  # Cloud
+  cloud:
+    provider: "github"  # github, vercel, netlify
+    region: "us-east-1"

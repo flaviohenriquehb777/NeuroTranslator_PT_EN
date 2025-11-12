@@ -52,8 +52,9 @@
     <!-- Microsoft Tiles -->
     <meta name="msapplication-TileImage" content="favicon-192x192.png?v=2025-01-29">
     <meta name="msapplication-TileColor" content="#1a1a1a">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="assets/css/styles.css">
+   <link rel="manifest" href="manifest.json">
+   <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/mobile.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -65,6 +66,24 @@
                 <h1><i class="fas fa-brain"></i> NeuroTranslator</h1>
             </div>
         </header>
+        
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav" id="mobileNav">
+            <button class="mobile-nav-toggle" id="mobileNavToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="mobile-nav-menu" id="mobileNavMenu">
+                <button class="mobile-nav-item" onclick="translator.swapLanguages()">
+                    <i class="fas fa-exchange-alt"></i> Trocar Idiomas
+                </button>
+                <button class="mobile-nav-item" onclick="translator.clearText()">
+                    <i class="fas fa-eraser"></i> Limpar
+                </button>
+                <button class="mobile-nav-item" onclick="translator.toggleSpeech()">
+                    <i class="fas fa-microphone"></i> Voz
+                </button>
+            </div>
+        </nav>
 
         <!-- Translation Section -->
         <section class="translation-section">
@@ -80,6 +99,9 @@
                                 <option value="fr">🇫🇷 Francês</option>
                                 <option value="de">🇩🇪 Alemão</option>
                                 <option value="zh">🇨🇳 Chinês</option>
+                                <option value="ja">🇯🇵 Japonês</option>
+                                <option value="it">🇮🇹 Italiano</option>
+                                <option value="ru">🇷🇺 Russo</option>
                             </select>
                         </div>
                         
@@ -96,6 +118,9 @@
                                 <option value="fr">🇫🇷 Francês</option>
                                 <option value="de">🇩🇪 Alemão</option>
                                 <option value="zh">🇨🇳 Chinês</option>
+                                <option value="ja">🇯🇵 Japonês</option>
+                                <option value="it">🇮🇹 Italiano</option>
+                                <option value="ru">🇷🇺 Russo</option>
                             </select>
                         </div>
                     </div>
