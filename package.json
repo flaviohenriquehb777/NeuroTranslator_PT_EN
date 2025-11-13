@@ -1,0 +1,25 @@
+{
+  "name": "neurotranslator-web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint web/assets/ts --ext .ts",
+    "proxy": "node infra/proxy/server.js",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.4.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0"
+  }
+}

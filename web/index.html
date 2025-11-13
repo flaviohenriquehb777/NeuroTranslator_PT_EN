@@ -49,44 +49,64 @@
     <!-- Fallback PNG -->
     <link rel="icon" type="image/png" href="favicon.png?v=2025-01-29">
     
-    <!-- Microsoft Tiles -->
-    <meta name="msapplication-TileImage" content="favicon-192x192.png?v=2025-01-29">
-    <meta name="msapplication-TileColor" content="#1a1a1a">
-   <link rel="manifest" href="manifest.json">
-   <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/mobile.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#0a0b0c">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    <meta name="msapplication-TileImage" content="favicon-144x144.png?v=2025-01-29">
+    
+    <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css?v=7">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="assets/js/script-optimized.js" as="script">
+    <link rel="preload" href="assets/images/logo_original.png" as="image">
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "NeuroTranslator PT-EN",
+        "description": "Sistema avançado de tradução automática em tempo real com Deep Learning e reconhecimento de voz",
+        "url": "https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/",
+        "applicationCategory": "TranslationApplication",
+        "operatingSystem": "Web",
+        "author": {
+            "@type": "Person",
+            "name": "Flavio Henrique"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "featureList": [
+            "Tradução automática PT-EN",
+            "Reconhecimento de voz",
+            "Interface responsiva",
+            "Suporte offline",
+            "Histórico de traduções"
+        ]
+    }
+    </script>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <img src="./assets/images/logo_original.png" alt="NeuroTranslator Logo" class="logo" onerror="console.error('Erro ao carregar logo:', this.src)">
-                <h1><i class="fas fa-brain"></i> NeuroTranslator</h1>
+                <img src="./assets/images/logo_original.png" alt="NeuroTranslator Logo" class="logo">
+                <h1 aria-label="NeuroTranslator"><i class="fas fa-brain" aria-hidden="true"></i> NeuroTranslator</h1>
             </div>
         </header>
-        
-        <!-- Mobile Navigation -->
-        <nav class="mobile-nav" id="mobileNav">
-            <button class="mobile-nav-toggle" id="mobileNavToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="mobile-nav-menu" id="mobileNavMenu">
-                <button class="mobile-nav-item" onclick="translator.swapLanguages()">
-                    <i class="fas fa-exchange-alt"></i> Trocar Idiomas
-                </button>
-                <button class="mobile-nav-item" onclick="translator.clearText()">
-                    <i class="fas fa-eraser"></i> Limpar
-                </button>
-                <button class="mobile-nav-item" onclick="translator.toggleSpeech()">
-                    <i class="fas fa-microphone"></i> Voz
-                </button>
-            </div>
-        </nav>
 
         <!-- Translation Section -->
         <section class="translation-section">
+                
                 <div class="translation-container">
                     <!-- Language Selection -->
                     <div class="language-selector">
@@ -131,11 +151,11 @@
                             <div class="area-header">
                                 <h3>Texto Original</h3>
                                 <div class="controls">
-                                    <button id="toggleSpeech" class="btn btn-speech">
+                                    <button id="toggleSpeech" class="btn btn-speech" aria-label="Falar" aria-pressed="false">
                                         <i class="fas fa-microphone"></i>
                                         <span>Falar</span>
                                     </button>
-                                    <button id="clearText" class="btn btn-clear">
+                                    <button id="clearText" class="btn btn-clear" aria-label="Apagar texto">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -145,8 +165,9 @@
                                 placeholder="Digite ou fale o texto que deseja traduzir..."
                                 rows="6"
                             ></textarea>
-                            <div class="speech-status">
+                            <div class="speech-status" aria-live="polite">
                                 <span id="speechStatus">🎤 Reconhecimento: Desativado</span>
+                                <span id="charCount">0 caracteres</span>
                             </div>
                         </div>
 
@@ -154,16 +175,15 @@
                             <div class="area-header">
                                 <h3>Tradução</h3>
                                 <div class="controls">
-                                    <button id="translateBtn" class="btn btn-translate">
-                                        <i class="fas fa-language"></i>
-                                        <span>Traduzir</span>
-                                    </button>
-                                    <button id="copyTranslation" class="btn btn-copy">
+                                    <button id="copyTranslation" class="btn btn-copy" aria-label="Copiar tradução">
                                         <i class="fas fa-copy"></i>
                                     </button>
-                                    <button id="repeatSpeech" class="btn btn-speech" title="Repetir leitura da tradução">
+                                    <button id="speakTranslation" class="btn btn-speech" aria-label="Ouvir tradução">
                                         <i class="fas fa-volume-up"></i>
-                                        <span>Repetir</span>
+                                    </button>
+                                    <button id="translateBtn" class="btn btn-translate" aria-label="Traduzir" aria-busy="false">
+                                        <i class="fas fa-language"></i>
+                                        Traduzir
                                     </button>
                                 </div>
                             </div>
@@ -173,12 +193,14 @@
                                 rows="6"
                                 readonly
                             ></textarea>
-                            <div class="translation-info">
+                            <div class="translation-info" aria-live="polite">
                                 <span id="translationStatus">Pronto para traduzir</span>
-                                <span id="processingTime"></span>
+                                <span id="translationTime"></span>
                             </div>
                         </div>
                     </div>
+
+                    
 
                     <!-- Options -->
                     <div class="options">
@@ -187,20 +209,6 @@
                             <span class="checkmark"></span>
                             Tradução automática
                         </label>
-                        <div class="voice-gender-selector">
-                            <label for="voiceGender">🎤 Voz para tradução:</label>
-                            <div style="position: relative;">
-                                <select id="voiceGender" class="voice-select">
-                                    <option value="auto">🤖 Automática (Alterna)</option>
-                                    <option value="male">👨 Masculina</option>
-                                    <option value="female">👩 Feminina</option>
-                                </select>
-                                <div class="voice-status-indicator" id="voiceStatusIndicator"></div>
-                                <div class="voice-tooltip" id="voiceTooltip">
-                                    Sistema aprimorado de seleção de vozes ativo
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -227,6 +235,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="assets/js/script.js"></script>
+    <script src="assets/js/script-optimized.js?v=7"></script>
 </body>
 </html>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' https: 'unsafe-inline'; connect-src 'self' https: http://localhost:3000;">
