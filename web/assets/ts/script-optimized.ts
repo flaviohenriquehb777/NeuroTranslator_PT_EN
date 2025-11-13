@@ -269,14 +269,14 @@ class NeuroTranslatorWeb {
     clearHistory() {}
     handleKeyboard(event: KeyboardEvent) { void event; }
 }
-document.addEventListener('DOMContentLoaded', () => {
-    (window as unknown as { neuroTranslator: NeuroTranslatorWeb }).neuroTranslator = new NeuroTranslatorWeb();
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (isLocal) {
-            navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
-        } else {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
+    document.addEventListener('DOMContentLoaded', () => {
+        (window as unknown as { neuroTranslator: NeuroTranslatorWeb }).neuroTranslator = new NeuroTranslatorWeb();
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            if (isLocal) {
+                navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
+            } else {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
         }
-    }
-});
+    });

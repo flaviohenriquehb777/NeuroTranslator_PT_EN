@@ -23,13 +23,13 @@
 ---
 
 <div align="center">
-  <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/">
+  <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/index.html">
     <img src="web/assets/images/preview.svg" alt="NeuroTranslator Web App" width="600" />
   </a>
 </div>
 
 <div align="center">
-  <strong>🚀 <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/">Acesse a Aplicação Web</a></strong>
+  <strong>🚀 <a href="https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/index.html">Acesse a Aplicação Web</a></strong>
 </div>
 
 ## 🌟 Visão Geral
@@ -128,7 +128,7 @@ NeuroTranslator_PT_EN/
 
 ### 📱 **Uso Web (Recomendado)**
 
-1. **Acesso Direto**: [https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/)
+1. **Acesso Direto**: [https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/index.html](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/index.html)
 
 2. **Servidor Local**:
    ```bash
