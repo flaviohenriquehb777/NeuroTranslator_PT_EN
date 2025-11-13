@@ -1,94 +1,114 @@
 # 🧠 NeuroTranslator
 
+Tradutor PT ↔ EN com interface web moderna, fallback múltiplo de serviços e proxy opcional para normalizar CORS. Reconhecimento de voz e síntese de fala integrados quando suportados pelo navegador.
+
+## Sumário
+- [Preview](#preview)
+- [Visão Geral](#visão-geral)
+- [Estrutura](#estrutura)
+- [Instalação](#instalação)
+- [Uso](#uso)
+- [Funcionalidades](#funcionalidades)
+- [Tradução e Proxy](#tradução-e-proxy)
+- [Desenvolvimento](#desenvolvimento)
+- [Testes](#testes)
+- [Deploy](#deploy)
+- [Contatos](#contatos)
+- [Licença](#licença)
+
+## Preview
+- GitHub Pages: https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/
+
+[![Abrir a aplicação](web/assets/images/preview.svg)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/web/)
+
 ## Visão Geral
+- Tradução no frontend com cadeia de fallback: MyMemory → LibreTranslate (4 endpoints) → proxy local (opcional).
+- Proxy Express com cache em memória e rate limit para uniformizar CORS e reduzir latência.
+- Service Worker com precache e Stale-While-Revalidate para experiência estável.
+- Acessibilidade: `aria-live`, `aria-busy`, foco visível e navegação por teclado.
 
-Aplicação de tradução PT ↔ EN com interface web moderna. A versão atual utiliza APIs públicas de tradução no frontend, reconhecimento de voz via Web Speech API e síntese de fala via SpeechSynthesis.
-
-## Estrutura do Projeto
-
+## Estrutura
 ```
 NeuroTranslator_PT_EN/
-├── web/                 # Aplicação web
+├── web/                      # Aplicação web
 │   ├── assets/
-│   │   ├── css/        # Estilos (styles.css)
-│   │   ├── images/     # Logos/ícones
-│   │   ├── ts/         # Código TypeScript (fonte)
-│   │   └── js/         # Bundle gerado (script-optimized.js)
+│   │   ├── css/             # Estilos (styles.css)
+│   │   ├── images/          # Imagens e miniaturas
+│   │   ├── ts/              # Código TypeScript (fonte)
+│   │   └── js/              # Bundle gerado (script-optimized.js)
 │   ├── index.html
 │   ├── manifest.json
 │   └── sw.js
-├── src/                 # Código Python (módulos auxiliares)
-├── docs/                # Documentação adicional
-├── scripts/             # Scripts utilitários
-├── notebooks/           # Notebooks Jupyter
-├── package.json         # Scripts de build/lint/typecheck
-├── tsconfig.json        # Configuração TypeScript
-└── vite.config.ts       # Build com Vite
+├── infra/                    # Artefatos de deploy e serviços auxiliares
+│   ├── proxy/server.js      # Proxy Express (CORS/cache/rate limit)
+│   └── vercel.json          # Configuração de roteamento (opcional)
+├── web/tests/               # Testes Vitest (frontend)
+├── package.json             # Scripts de build/lint/typecheck/test
+├── tsconfig.json            # Configuração TypeScript
+└── vite.config.ts           # Build com Vite
 ```
 
-Observações:
-- Não há `web/api/` nem `mobile.css` na versão atual.
-- O arquivo `web/assets/js/script-optimized.js` é gerado a partir de `web/assets/ts/script-optimized.ts`.
-
-## Instalação e Uso
-
+## Instalação
 Requisitos: Node.js 18+, npm.
 
 ```bash
 git clone https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN.git
 cd NeuroTranslator_PT_EN
 npm install
-npm run build
+```
 
-# Preview local
+## Uso
+```bash
+npm run build
 python -m http.server 8000 --directory web
 # Abra http://localhost:8000/
 ```
 
-Para recursos Python (opcionais):
-
+Opcional (proxy local):
 ```bash
-pip install -r requirements.txt
-python main.py
+npm run proxy
+# http://localhost:3000/translate
 ```
 
-## Funcionalidades (Atual)
-
-- Tradução de texto no frontend usando MyMemory com fallback LibreTranslate.
-- Reconhecimento de voz (quando suportado pelo navegador).
-- Síntese de fala do texto traduzido.
-- Layout escuro com estrelas, responsivo.
+## Funcionalidades
+- Tradução de texto com cadeia de fallback e preservação de capitalização do texto original.
+- Reconhecimento de voz (Web Speech API) e síntese de fala (SpeechSynthesis).
+- Layout escuro com estrelas, responsivo e acessível.
 
 Limitações:
-- Tradução depende de serviços públicos (pode haver limites/instabilidade).
-- Sem backend FastAPI ativo na pasta `web/`.
+- Serviços públicos de tradução podem impor limites ou instabilidades.
+
+## Tradução e Proxy
+- Frontend tenta MyMemory (GET). Se falhar, tenta LibreTranslate em: `translate.astian.org`, `libretranslate.de`, `libretranslate.com`, `translate.argosopentech.com`.
+- Em `localhost`, o frontend usa primeiro `http://localhost:3000/translate` (se o proxy estiver ativo).
+- Proxy (`infra/proxy/server.js`) aplica cache curto e rate limit para estabilidade.
 
 ## Desenvolvimento
-
 Scripts npm:
-
 ```bash
 npm run build      # gera web/assets/js/script-optimized.js
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit
-npm run proxy      # inicia proxy local em http://localhost:3000/translate
+npm test           # Vitest
+npm run proxy      # inicia proxy local
 ```
 
 Tecnologias:
-- Vite + TypeScript no frontend; Web APIs para voz/fala.
+- Vite + TypeScript no frontend; Web APIs para voz/fala; Express no proxy.
 
-Proxy opcional:
-- Endpoint local: `http://localhost:3000/translate`
-- Encaminha para MyMemory e LibreTranslate, normalizando CORS.
+## Testes
+- Teste de fallback de tradução em `web/tests/translation.test.ts`.
+```bash
+npm test
+```
 
-Deploy (Vercel, opcional):
-- Configurações movidas para `infra/vercel.json` e `infra/vercel/project.json`.
-- Use CLI com argumento `-c infra/vercel.json` para apontar o arquivo de configuração.
+## Deploy
+- Vercel (opcional): configurações em `infra/vercel.json` e `infra/vercel/project.json`.
+- GitHub Pages: conteúdo servido de `web/`.
 
-## Contribuição
-
-Pull Requests são bem-vindos. Mantenha lint e typecheck passando e atualize este README quando alterar funcionalidades.
+## Contatos
+- GitHub: https://github.com/flaviohenriquehb777
+- Issues: https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/issues
 
 ## Licença
-
 MIT. Veja `LICENSE.md`.
