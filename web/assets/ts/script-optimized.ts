@@ -4,6 +4,7 @@ interface ISpeechRecognition {
     interimResults: boolean;
     onresult: (ev: Event) => void;
     onerror: (ev: Event) => void;
+    onend: () => void;
     start: () => void;
     stop: () => void;
 }
@@ -16,11 +17,14 @@ class NeuroTranslatorWeb {
     translation: TranslationState;
     elements: AppElements;
     lastTranslation: { text: string; language: string } | null;
+    voiceInputTriggered: boolean;
+
     constructor() {
         this.speech = { recognition: null, active: false, supported: false };
         this.translation = { history: [], autoTranslate: true };
         this.elements = {};
         this.lastTranslation = null;
+        this.voiceInputTriggered = false;
         this.init();
     }
     init() {
@@ -76,9 +80,11 @@ class NeuroTranslatorWeb {
             const r = e as unknown as { results: Array<{ 0: { transcript: string } }> };
             const text = r.results[0][0].transcript;
             (this.elements.sourceText as HTMLTextAreaElement).value = text;
+            this.voiceInputTriggered = true;
             this.onTextInput();
         };
         rec.onerror = () => { this.stopSpeech(); };
+        rec.onend = () => { this.stopSpeech(); };
         this.speech.recognition = rec;
     }
     toggleSpeech() {
@@ -150,6 +156,10 @@ class NeuroTranslatorWeb {
             translated = this.preserveCasing(src, translated || src);
             tgt.value = translated;
             status.textContent = 'Pronto para traduzir';
+            if (this.voiceInputTriggered) {
+                this.speakOutTranslation();
+                this.voiceInputTriggered = false;
+            }
         } catch {
             tgt.value = src;
             status.textContent = 'Falha na tradução';
