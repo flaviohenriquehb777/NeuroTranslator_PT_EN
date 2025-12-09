@@ -43,6 +43,11 @@ O **NeuroTranslator PT-EN** é um sistema avançado de tradução automática em
 - 🇫🇷 **Francês** (França)
 - 🇩🇪 **Alemão** (Alemanha)
 - 🇨🇳 **Chinês** (Mandarim)
+- 🇯🇵 **Japonês** (Japão)
+- 🇮🇹 **Italiano** (Itália)
+- 🇷🇺 **Russo** (Rússia)
+
+> Observação: a disponibilidade de reconhecimento e síntese de voz depende do suporte do navegador e pode variar entre idiomas.
 
 ## 🌐 Aplicação Web
 
@@ -66,7 +71,7 @@ A aplicação web apresenta um design profissional e moderno:
 ## ✨ Principais Funcionalidades
 
 ### 🎯 **Core Features**
-- 🌐 **Tradução Multilíngue**: Suporte para 6 idiomas principais
+- 🌐 **Tradução Multilíngue**: Suporte para 9 idiomas principais
 - 🎤 **Reconhecimento de Voz**: Web Speech API com alta precisão
 - 🔊 **Síntese de Fala**: Sistema de vozes fixas para consistência
 - 📝 **Interface Otimizada**: Design focado em tradução eficiente
