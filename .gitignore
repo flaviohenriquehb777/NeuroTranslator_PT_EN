@@ -113,3 +113,6 @@ test_*.html
 config/local.yaml
 config/development.yaml
 config/production.yaml
+
+# ===== FERRAMENTAS LOCAIS =====
+.trae/
