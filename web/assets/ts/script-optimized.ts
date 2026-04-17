@@ -261,6 +261,7 @@ class NeuroTranslatorWeb {
     private readonly MAX_HISTORY = 50;
 
     private drawerOpen = false;
+    private openDropdown: 'source' | 'target' | null = null;
 
     // DOM references
     private els: Record<string, HTMLElement> = {};
@@ -274,7 +275,7 @@ class NeuroTranslatorWeb {
 
     private init(): void {
         this.cacheElements();
-        this.buildLanguagePills();
+        this.buildLanguageDropdowns();
         this.bindEvents();
         this.checkBrowserSupport();
         this.loadHistory();
@@ -288,7 +289,9 @@ class NeuroTranslatorWeb {
             'toggleSpeech', 'speechStatus', 'clearText', 'copyTranslation',
             'speakTranslation', 'autoTranslate', 'historyContainer',
             'clearHistory', 'translationStatus', 'translationTime',
-            'charCount', 'sourcePills', 'targetPills', 'confidenceBar',
+            'charCount', 'sourceDropdown', 'targetDropdown', 'sourceDropdownTrigger',
+            'targetDropdownTrigger', 'sourceDropdownMenu', 'targetDropdownMenu',
+            'sourceDropdownCurrent', 'targetDropdownCurrent', 'confidenceBar',
             'confidenceText', 'detectedLangBadge', 'historyDrawer',
             'historyDrawerOverlay', 'openHistoryBtn', 'closeHistoryBtn',
             'historyFilter', 'shortcutsModal', 'shortcutsBtn',
@@ -309,6 +312,8 @@ class NeuroTranslatorWeb {
         this.on('copyTranslation', 'click', () => this.copyTranslation());
         this.on('speakTranslation', 'click', () => this.speakOutTranslation());
         this.on('clearHistory', 'click', () => this.clearHistory());
+        this.on('sourceDropdownTrigger', 'click', () => this.toggleDropdown('source'));
+        this.on('targetDropdownTrigger', 'click', () => this.toggleDropdown('target'));
         this.on('openHistoryBtn', 'click', () => this.toggleDrawer(true));
         this.on('closeHistoryBtn', 'click', () => this.toggleDrawer(false));
         this.on('historyDrawerOverlay', 'click', () => this.toggleDrawer(false));
@@ -321,6 +326,7 @@ class NeuroTranslatorWeb {
         // Language filter for history
         this.on('historyFilter', 'change', () => this.renderHistory());
 
+        document.addEventListener('click', (e) => this.handleOutsideClick(e));
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
     }
 
@@ -333,57 +339,104 @@ class NeuroTranslatorWeb {
         this.speechSupported = !!(w.SpeechRecognition || w.webkitSpeechRecognition);
     }
 
-    // ─── Language Pill Selectors ────────────────────────────
+    // ─── Language Custom Dropdowns ──────────────────────────
 
     private selectedSource = 'pt';
     private selectedTarget = 'en';
 
-    private buildLanguagePills(): void {
-        this.renderPills('sourcePills', this.selectedSource, (code) => {
-            this.selectedSource = code;
-            this.renderPills('sourcePills', code, arguments.callee as unknown as (c: string) => void);
-            this.onSourceLangChange();
-        });
-        this.renderPills('targetPills', this.selectedTarget, (code) => {
-            this.selectedTarget = code;
-            this.renderPills('targetPills', code, arguments.callee as unknown as (c: string) => void);
-            this.onTargetLangChange();
-        });
+    private buildLanguageDropdowns(): void {
+        this.renderDropdownOptions('source');
+        this.renderDropdownOptions('target');
+        this.updateDropdownCurrent('source');
+        this.updateDropdownCurrent('target');
     }
 
-    private renderPills(containerId: string, selected: string, onSelect: (code: string) => void): void {
-        const container = this.els[containerId];
-        if (!container) return;
-        container.innerHTML = '';
+    private renderDropdownOptions(which: 'source' | 'target'): void {
+        const menu = this.els[which === 'source' ? 'sourceDropdownMenu' : 'targetDropdownMenu'];
+        const selected = which === 'source' ? this.selectedSource : this.selectedTarget;
+        if (!menu) return;
+        menu.innerHTML = '';
 
         for (const code of LANG_ORDER) {
             const lang = LANGUAGES[code];
-            const pill = document.createElement('button');
-            pill.className = `lang-pill${code === selected ? ' active' : ''}`;
-            pill.setAttribute('data-lang', code);
-            pill.setAttribute('type', 'button');
-            pill.innerHTML = `<span class="pill-flag">${lang.flag}</span><span class="pill-label">${lang.label}</span>`;
-            pill.addEventListener('click', () => {
-                onSelect(code);
+            const option = document.createElement('button');
+            option.className = `lang-dropdown-option${code === selected ? ' active' : ''}`;
+            option.type = 'button';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', String(code === selected));
+            option.setAttribute('data-lang', code);
+            option.innerHTML = `<span class="dropdown-option-flag">${lang.flag}</span><span class="dropdown-option-label">${lang.label}</span>`;
+            option.addEventListener('click', () => {
+                this.selectLanguage(which, code);
+                this.closeDropdowns();
                 this.haptic();
             });
-            container.appendChild(pill);
+            menu.appendChild(option);
+        }
+    }
+
+    private updateDropdownCurrent(which: 'source' | 'target'): void {
+        const selected = which === 'source' ? this.selectedSource : this.selectedTarget;
+        const current = this.els[which === 'source' ? 'sourceDropdownCurrent' : 'targetDropdownCurrent'];
+        if (!current) return;
+        const lang = LANGUAGES[selected];
+        current.innerHTML = `<span class="dropdown-current-flag">${lang.flag}</span><span class="dropdown-current-label">${lang.label}</span>`;
+    }
+
+    private toggleDropdown(which: 'source' | 'target'): void {
+        const sourceWrap = this.els['sourceDropdown'];
+        const targetWrap = this.els['targetDropdown'];
+        if (!sourceWrap || !targetWrap) return;
+
+        const willOpen = this.openDropdown !== which;
+        this.closeDropdowns();
+        if (willOpen) {
+            this.openDropdown = which;
+            const wrap = which === 'source' ? sourceWrap : targetWrap;
+            const trigger = this.els[which === 'source' ? 'sourceDropdownTrigger' : 'targetDropdownTrigger'];
+            wrap.classList.add('open');
+            trigger?.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    private closeDropdowns(): void {
+        this.openDropdown = null;
+        this.els['sourceDropdown']?.classList.remove('open');
+        this.els['targetDropdown']?.classList.remove('open');
+        this.els['sourceDropdownTrigger']?.setAttribute('aria-expanded', 'false');
+        this.els['targetDropdownTrigger']?.setAttribute('aria-expanded', 'false');
+    }
+
+    private handleOutsideClick(e: Event): void {
+        const target = e.target as Node | null;
+        if (!target) return;
+        const sourceWrap = this.els['sourceDropdown'];
+        const targetWrap = this.els['targetDropdown'];
+        if (sourceWrap?.contains(target) || targetWrap?.contains(target)) return;
+        this.closeDropdowns();
+    }
+
+    private selectLanguage(which: 'source' | 'target', code: string): void {
+        if (which === 'source') {
+            if (code === this.selectedSource) return;
+            const previousSource = this.selectedSource;
+            this.selectedSource = code;
+            if (this.selectedSource === this.selectedTarget) {
+                this.selectedTarget = previousSource;
+            }
+            this.onSourceLangChange();
+            this.onTargetLangChange();
+            return;
         }
 
-        // Scroll active pill into view
-        requestAnimationFrame(() => {
-            const active = container.querySelector('.lang-pill.active') as HTMLElement;
-            if (active) {
-                active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }
-        });
+        if (code === this.selectedTarget) return;
+        this.selectedTarget = code;
+        this.onTargetLangChange();
     }
 
     private onSourceLangChange(): void {
-        this.renderPills('sourcePills', this.selectedSource, (code) => {
-            this.selectedSource = code;
-            this.onSourceLangChange();
-        });
+        this.renderDropdownOptions('source');
+        this.updateDropdownCurrent('source');
         this.voiceEngine.warmUp(this.selectedSource);
         // Re-detect if needed
         const txt = (this.els['sourceText'] as HTMLTextAreaElement)?.value;
@@ -391,10 +444,8 @@ class NeuroTranslatorWeb {
     }
 
     private onTargetLangChange(): void {
-        this.renderPills('targetPills', this.selectedTarget, (code) => {
-            this.selectedTarget = code;
-            this.onTargetLangChange();
-        });
+        this.renderDropdownOptions('target');
+        this.updateDropdownCurrent('target');
         this.warmUpTargetVoice();
         const txt = (this.els['sourceText'] as HTMLTextAreaElement)?.value;
         if (txt && this.autoTranslateEnabled) this.debouncedTranslate();
@@ -649,15 +700,9 @@ class NeuroTranslatorWeb {
             tgtEl.value = tmpText;
         }
 
-        // Re-render pills
-        this.renderPills('sourcePills', this.selectedSource, (code) => {
-            this.selectedSource = code;
-            this.onSourceLangChange();
-        });
-        this.renderPills('targetPills', this.selectedTarget, (code) => {
-            this.selectedTarget = code;
-            this.onTargetLangChange();
-        });
+        this.onSourceLangChange();
+        this.onTargetLangChange();
+        this.closeDropdowns();
 
         this.warmUpTargetVoice();
         this.haptic();
@@ -830,8 +875,8 @@ class NeuroTranslatorWeb {
         this.selectedTarget = entry.targetLang;
         (this.els['sourceText'] as HTMLTextAreaElement).value = entry.source;
         (this.els['targetText'] as HTMLTextAreaElement).value = entry.target;
-        this.renderPills('sourcePills', this.selectedSource, (code) => { this.selectedSource = code; this.onSourceLangChange(); });
-        this.renderPills('targetPills', this.selectedTarget, (code) => { this.selectedTarget = code; this.onTargetLangChange(); });
+        this.onSourceLangChange();
+        this.onTargetLangChange();
         this.toggleDrawer(false);
     }
 
@@ -899,6 +944,7 @@ class NeuroTranslatorWeb {
         }
         // Escape → close drawer/modal
         if (e.key === 'Escape') {
+            this.closeDropdowns();
             if (this.drawerOpen) this.toggleDrawer(false);
             this.toggleShortcutsModal(false);
         }

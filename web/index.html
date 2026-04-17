@@ -108,25 +108,35 @@
         <!-- ═══ Translation Section ═══ -->
         <section class="translation-section">
             
-            <!-- Language Pill Selectors -->
+            <!-- Language Custom Dropdown Selectors -->
             <div class="language-selector">
-                <div class="lang-row">
-                    <span class="lang-row-label">De:</span>
-                    <div class="pills-container" id="sourcePills">
-                        <!-- Pills rendered by JS -->
+                <div class="language-dropdown-wrap">
+                    <div class="lang-dropdown" id="sourceDropdown">
+                        <span class="lang-row-label">DE</span>
+                        <button id="sourceDropdownTrigger" class="lang-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" type="button">
+                            <span id="sourceDropdownCurrent" class="lang-dropdown-current"></span>
+                            <i class="fas fa-chevron-down dropdown-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="sourceDropdownMenu" class="lang-dropdown-menu" role="listbox" aria-label="Idioma de origem">
+                            <!-- Options rendered by JS -->
+                        </div>
                     </div>
-                </div>
 
-                <div class="swap-row">
-                    <button id="swapLanguages" class="btn-swap" aria-label="Trocar idiomas" type="button">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
-                </div>
+                    <div class="swap-row">
+                        <button id="swapLanguages" class="btn-swap" aria-label="Trocar idiomas" type="button">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
 
-                <div class="lang-row">
-                    <span class="lang-row-label">Para:</span>
-                    <div class="pills-container" id="targetPills">
-                        <!-- Pills rendered by JS -->
+                    <div class="lang-dropdown" id="targetDropdown">
+                        <span class="lang-row-label">PARA</span>
+                        <button id="targetDropdownTrigger" class="lang-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" type="button">
+                            <span id="targetDropdownCurrent" class="lang-dropdown-current"></span>
+                            <i class="fas fa-chevron-down dropdown-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="targetDropdownMenu" class="lang-dropdown-menu" role="listbox" aria-label="Idioma de destino">
+                            <!-- Options rendered by JS -->
+                        </div>
                     </div>
                 </div>
             </div>
