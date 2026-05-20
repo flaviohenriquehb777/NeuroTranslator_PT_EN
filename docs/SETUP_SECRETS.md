@@ -5,7 +5,8 @@
 1. Acesse: https://huggingface.co/settings/tokens
 2. Clique em **New token**
 3. Selecione **Write** (necessário para fazer push no Space)
-4. Copie o token gerado
+4. Garanta que você está logado no usuário dono do Space (neste projeto: **Flaviohb7**)
+5. Copie o token gerado
 
 ## 2) Adicionar no GitHub Actions
 
@@ -19,4 +20,3 @@
 
 Se necessário, confira a conexão do GitHub no Hugging Face:
 https://huggingface.co/settings/connected-applications
-

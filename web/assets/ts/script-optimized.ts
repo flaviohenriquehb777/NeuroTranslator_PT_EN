@@ -306,6 +306,7 @@ class NeuroTranslatorWeb {
 
     private init(): void {
         this.cacheElements();
+        this.autoTranslateEnabled = (this.els['autoTranslateToggle'] as HTMLInputElement | undefined)?.checked ?? true;
         this.buildLanguageDropdowns();
         this.bindEvents();
         this.checkBrowserSupport();
@@ -385,6 +386,17 @@ class NeuroTranslatorWeb {
         } else {
             btn?.removeAttribute('disabled');
             btn?.removeAttribute('aria-disabled');
+        }
+
+        const ttsSupported = typeof (window as unknown as { speechSynthesis?: unknown }).speechSynthesis !== 'undefined'
+            && typeof (window as unknown as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance !== 'undefined';
+        const speakBtn = this.els['speakTranslation'] as HTMLButtonElement | undefined;
+        if (!ttsSupported) {
+            speakBtn?.setAttribute('disabled', 'true');
+            speakBtn?.setAttribute('aria-disabled', 'true');
+        } else {
+            speakBtn?.removeAttribute('disabled');
+            speakBtn?.removeAttribute('aria-disabled');
         }
     }
 
@@ -699,16 +711,30 @@ class NeuroTranslatorWeb {
         const config = LANGUAGES[this.selectedSource];
         rec.lang = config?.bcp47 || this.selectedSource;
         rec.continuous = false;
-        rec.interimResults = false;
+        rec.interimResults = true;
 
         rec.onresult = (e: Event) => {
             const r = e as unknown as { results: Array<{ 0: { transcript: string } }> };
-            const text = r.results[0][0].transcript;
+            const last = r.results[r.results.length - 1];
+            const text = last?.[0]?.transcript || '';
             (this.els['sourceText'] as HTMLTextAreaElement).value = text;
             this.voiceInputTriggered = true;
             this.onTextInput();
         };
-        rec.onerror = () => this.stopSpeech();
+        rec.onerror = (ev: Event) => {
+            const e = ev as unknown as { error?: string; message?: string };
+            const code = (e.error || '').toString();
+            if (code === 'not-allowed' || code === 'service-not-allowed') {
+                this.showToast('Microfone bloqueado. Permita o acesso ao microfone no navegador.');
+            } else if (code === 'no-speech') {
+                this.showToast('Nenhuma fala detectada. Tente novamente.');
+            } else if (code) {
+                this.showToast(`Reconhecimento de voz falhou: ${code}`);
+            } else {
+                this.showToast('Reconhecimento de voz falhou.');
+            }
+            this.stopSpeech();
+        };
         rec.onend = () => this.stopSpeech();
         this.recognition = rec;
     }
@@ -732,7 +758,12 @@ class NeuroTranslatorWeb {
             this.speechActive = true;
             this.updateSpeechUI(true);
             this.recognition.start();
-        } catch { this.speechActive = false; }
+        } catch (err) {
+            this.speechActive = false;
+            this.updateSpeechUI(false);
+            this.logStructuredError({ stage: 'speech_start', error: err });
+            this.showToast('Não foi possível iniciar o microfone. Verifique a permissão do microfone no navegador.');
+        }
     }
 
     private stopSpeech(): void {
@@ -859,7 +890,15 @@ class NeuroTranslatorWeb {
                 }
             }
 
-            translated = this.preserveCasing(src, translated || src);
+            if (!translated) {
+                if (statusEl) statusEl.textContent = 'Falha na tradução';
+                this.updateConfidence(0);
+                this.hideEngineBadge();
+                this.showToast('Falha na tradução. Verifique sua conexão e tente novamente.');
+                return;
+            }
+
+            translated = this.preserveCasing(src, translated);
             if (tgtEl) tgtEl.value = translated;
             if (statusEl) statusEl.textContent = engineKind === 'neural' ? 'Tradução neural concluída' : 'Tradução concluída';
 
@@ -887,8 +926,9 @@ class NeuroTranslatorWeb {
                 this.voiceInputTriggered = false;
             }
         } catch (err) {
-            if (tgtEl) tgtEl.value = src;
+            if (tgtEl) tgtEl.value = '';
             if (statusEl) statusEl.textContent = 'Falha na tradução';
+            this.updateConfidence(0);
             this.hideEngineBadge();
             this.logStructuredError({ stage: 'translate', engine: 'client', langPair: `${sourceLang}-${targetLang}`, error: err });
             this.showToast('Falha na tradução. Tente novamente.');
@@ -1077,11 +1117,22 @@ class NeuroTranslatorWeb {
         if (!txt) return;
         const btn = this.els['speakTranslation'];
         try {
+            let started = false;
+            const watchdog = window.setTimeout(() => {
+                if (!started) this.showToast('Voz indisponível neste dispositivo/navegador.');
+            }, 1400);
             this.voiceEngine.speakText(
                 txt,
                 this.selectedTarget,
-                () => btn?.classList.add('speaking'),
-                () => btn?.classList.remove('speaking')
+                () => {
+                    started = true;
+                    window.clearTimeout(watchdog);
+                    btn?.classList.add('speaking');
+                },
+                () => {
+                    window.clearTimeout(watchdog);
+                    btn?.classList.remove('speaking');
+                }
             );
         } catch (err) {
             this.logStructuredError({ stage: 'voice_speak', error: err });
