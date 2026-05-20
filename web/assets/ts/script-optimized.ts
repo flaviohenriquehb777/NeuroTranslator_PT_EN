@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   NeuroTranslator v5.0 — Advanced Neural Translation Engine
+   NeuroTranslator v5.0.2 — Advanced Neural Translation Engine
    © 2025 Flávio Henrique Barbosa — MIT License
    ═══════════════════════════════════════════════════════════════ */
 
@@ -287,7 +287,7 @@ class NeuroTranslatorWeb {
     private drawerOpen = false;
     private openDropdown: 'source' | 'target' | null = null;
 
-    private readonly HF_SPACE_BASE = 'https://flaviohenriquehb777-neurotranslator-api.hf.space';
+    private readonly HF_SPACE_BASE = 'https://flaviohb7-neurotranslator-api.hf.space';
     private sessionLatencies: number[] = [];
     private lastEngineLabel = '';
     private lastModelUsed = '';
@@ -376,6 +376,16 @@ class NeuroTranslatorWeb {
     private checkBrowserSupport(): void {
         const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
         this.speechSupported = !!(w.SpeechRecognition || w.webkitSpeechRecognition);
+        const btn = this.els['toggleSpeech'] as HTMLButtonElement | undefined;
+        const status = this.els['speechStatus'];
+        if (!this.speechSupported) {
+            btn?.setAttribute('disabled', 'true');
+            btn?.setAttribute('aria-disabled', 'true');
+            if (status) status.textContent = '🎤 Reconhecimento: Indisponível neste navegador';
+        } else {
+            btn?.removeAttribute('disabled');
+            btn?.removeAttribute('aria-disabled');
+        }
     }
 
     private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
@@ -704,6 +714,10 @@ class NeuroTranslatorWeb {
     }
 
     private toggleSpeech(): void {
+        if (!this.speechSupported) {
+            this.showToast('Reconhecimento de voz: disponível no Chrome (desktop/Android).');
+            return;
+        }
         if (!this.recognition) this.initSpeechRecognition();
         if (!this.recognition) return;
         this.speechActive ? this.stopSpeech() : this.startSpeech();

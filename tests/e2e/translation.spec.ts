@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const HF_BASE = 'https://flaviohenriquehb777-neurotranslator-api.hf.space';
+const HF_BASE = 'https://flaviohb7-neurotranslator-api.hf.space';
 
 async function setAutoTranslate(page: any, enabled: boolean): Promise<void> {
   await page.evaluate((value) => {

@@ -1,5 +1,5 @@
-/* NeuroTranslator v5.0 — Service Worker */
-const CACHE_NAME = 'neurotranslator-v5.0';
+/* NeuroTranslator v5.0.2 — Service Worker */
+const CACHE_NAME = 'neurotranslator-v5.0.2';
 const TRANSLATION_CACHE = 'nt5-translations';
 const MAX_TRANSLATION_ENTRIES = 100;
 
