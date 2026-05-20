@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-import src.api.main as main
+try:
+    import src.api.main as main
+except Exception:
+    import main as main  # type: ignore
 
 
 def test_health() -> None:

@@ -62,6 +62,8 @@ jobs:
       - run: ruff check src/api/
       - run: mypy src/api/main.py --ignore-missing-imports
       - run: pytest src/api/tests/ -v
+        env:
+          PYTHONPATH: ${{ github.workspace }}
 
   deploy-api:
     name: Deploy API → Hugging Face Spaces
