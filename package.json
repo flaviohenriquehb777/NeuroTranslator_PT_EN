@@ -3,11 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "dev": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint web/assets/ts --ext .ts",
     "proxy": "node infra/proxy/server.js",
-    "test": "vitest"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "vite": "^5.0.0",
@@ -15,6 +18,7 @@
     "eslint": "^8.56.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@playwright/test": "^1.53.0",
     "vitest": "^1.6.0"
   },
   "dependencies": {

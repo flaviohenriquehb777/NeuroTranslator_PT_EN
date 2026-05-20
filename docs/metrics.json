@@ -1,0 +1,7 @@
+{
+  "timestamp": "2026-05-20T00:00:00Z",
+  "bleu_score": 0,
+  "avg_latency_ms": 0,
+  "model": "Helsinki-NLP/opus-mt-pt-en",
+  "test_samples": 20
+}

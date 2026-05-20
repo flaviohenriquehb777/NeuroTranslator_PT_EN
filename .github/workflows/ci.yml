@@ -1,26 +1,100 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main]
   pull_request:
-    branches: [ main, master ]
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build:
+  frontend:
+    name: Frontend (Lint + TypeCheck + Test + Build)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install
-        run: npm ci
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Lint
-        run: npm run lint
-      - name: Build
-        run: npm run build
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --reporter=verbose
+      - run: npm run build
+      - name: Check bundle size
+        run: |
+          SIZE=$(gzip -c web/assets/js/script-optimized.js | wc -c)
+          echo "Bundle size gzipped: ${SIZE} bytes"
+          if [ $SIZE -gt 15360 ]; then echo "❌ Bundle > 15KB!" && exit 1; fi
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  backend:
+    name: Backend Python (Lint + Type + Test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - run: pip install ruff mypy pytest httpx -r src/api/requirements.txt
+      - run: ruff check src/api/
+      - run: mypy src/api/main.py --ignore-missing-imports
+      - run: pytest src/api/tests/ -v
+
+  deploy-api:
+    name: Deploy API → Hugging Face Spaces
+    needs: [frontend, e2e, backend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to HF Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          VERSION: ${{ github.sha }}
+        run: bash scripts/deploy_to_hf_spaces.sh
+
+  deploy-frontend:
+    name: Deploy Frontend → GitHub Pages
+    needs: [frontend, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./web"
+      - id: deployment
+        uses: actions/deploy-pages@v4

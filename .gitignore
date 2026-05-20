@@ -98,6 +98,10 @@ npm-debug.log*
 dist/
 build/
 
+# Playwright
+test-results/
+playwright-report/
+
 # ===== RELATÓRIOS E DEBUG =====
 # Relatórios JSON gerados por scripts
 *_report.json

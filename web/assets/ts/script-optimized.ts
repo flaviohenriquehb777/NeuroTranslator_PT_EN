@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   NeuroTranslator v4.0 — Advanced Neural Translation Engine
+   NeuroTranslator v5.0 — Advanced Neural Translation Engine
    © 2025 Flávio Henrique Barbosa — MIT License
    ═══════════════════════════════════════════════════════════════ */
 
@@ -32,6 +32,30 @@ interface TranslationEntry {
     targetLang: string;
     confidence: number;
     timestamp: number;
+}
+
+interface NeuralTranslateResponse {
+    translated_text: string;
+    model_used: string;
+    confidence: number;
+    latency_ms: number;
+}
+
+interface NeuralHealthResponse {
+    status?: string;
+    loaded_models_count?: number;
+    memory_mb?: number | null;
+    started_at?: number;
+    uptime_s?: number;
+    timestamp?: number;
+}
+
+interface NeuralMetricsResponse {
+    timestamp?: string;
+    bleu_score?: number;
+    avg_latency_ms?: number;
+    model?: string;
+    test_samples?: number;
 }
 
 interface VoiceScore {
@@ -263,6 +287,13 @@ class NeuroTranslatorWeb {
     private drawerOpen = false;
     private openDropdown: 'source' | 'target' | null = null;
 
+    private readonly HF_SPACE_BASE = 'https://flaviohenriquehb777-neurotranslator-api.hf.space';
+    private sessionLatencies: number[] = [];
+    private lastEngineLabel = '';
+    private lastModelUsed = '';
+    private toastHideTimer: number | null = null;
+    private globalErrorHandlersInstalled = false;
+
     // DOM references
     private els: Record<string, HTMLElement> = {};
 
@@ -281,6 +312,8 @@ class NeuroTranslatorWeb {
         this.loadHistory();
         this.loadContextMemory();
         this.warmUpTargetVoice();
+        void this.warmUpNeuralApi();
+        this.installGlobalErrorHandlers();
     }
 
     private cacheElements(): void {
@@ -296,6 +329,10 @@ class NeuroTranslatorWeb {
             'historyDrawerOverlay', 'openHistoryBtn', 'closeHistoryBtn',
             'historyFilter', 'shortcutsModal', 'shortcutsBtn',
             'closeShortcuts', 'autoTranslateToggle',
+            'engineBadge',
+            'metricsToggle', 'metricsPanel', 'metricsClose',
+            'metricBleu', 'metricLatency', 'metricEngine', 'metricUptime',
+            'toast',
         ];
         for (const id of ids) {
             const el = document.getElementById(id);
@@ -319,6 +356,8 @@ class NeuroTranslatorWeb {
         this.on('historyDrawerOverlay', 'click', () => this.toggleDrawer(false));
         this.on('shortcutsBtn', 'click', () => this.toggleShortcutsModal(true));
         this.on('closeShortcuts', 'click', () => this.toggleShortcutsModal(false));
+        this.on('metricsToggle', 'click', () => this.toggleMetricsPanel());
+        this.on('metricsClose', 'click', () => this.toggleMetricsPanel(false));
         this.on('autoTranslateToggle', 'change', () => {
             this.autoTranslateEnabled = (this.els['autoTranslateToggle'] as HTMLInputElement)?.checked ?? true;
         });
@@ -337,6 +376,184 @@ class NeuroTranslatorWeb {
     private checkBrowserSupport(): void {
         const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
         this.speechSupported = !!(w.SpeechRecognition || w.webkitSpeechRecognition);
+    }
+
+    private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+        const controller = new AbortController();
+        const t = window.setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            return await fetch(url, { ...init, signal: controller.signal });
+        } finally {
+            window.clearTimeout(t);
+        }
+    }
+
+    private normalizeError(err: unknown): { message: string; stack?: string } {
+        if (err instanceof Error) return { message: err.message, stack: err.stack };
+        if (typeof err === 'string') return { message: err };
+        try {
+            return { message: JSON.stringify(err) };
+        } catch {
+            return { message: 'unknown_error' };
+        }
+    }
+
+    private logStructuredError(payload: { stage: string; engine?: string; langPair?: string; error: unknown }): void {
+        const normalized = this.normalizeError(payload.error);
+        const out = {
+            timestamp: new Date().toISOString(),
+            stage: payload.stage,
+            engine: payload.engine,
+            langPair: payload.langPair,
+            error: normalized,
+        };
+        console.error(out);
+    }
+
+    private showToast(message: string): void {
+        const toast = this.els['toast'];
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        if (this.toastHideTimer) window.clearTimeout(this.toastHideTimer);
+        this.toastHideTimer = window.setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3500);
+    }
+
+    private installGlobalErrorHandlers(): void {
+        if (this.globalErrorHandlersInstalled) return;
+        this.globalErrorHandlersInstalled = true;
+
+        window.addEventListener('error', (ev) => {
+            this.logStructuredError({ stage: 'window_error', error: (ev as ErrorEvent).error || (ev as ErrorEvent).message });
+            this.showToast('Ocorreu um erro inesperado.');
+        });
+
+        window.addEventListener('unhandledrejection', (ev) => {
+            this.logStructuredError({ stage: 'unhandled_promise', error: (ev as PromiseRejectionEvent).reason });
+            this.showToast('Ocorreu um erro inesperado.');
+        });
+    }
+
+    private setEngineBadge(kind: 'neural' | 'fallback', label: string, modelUsed: string): void {
+        const badge = this.els['engineBadge'];
+        if (!badge) return;
+        badge.classList.remove('neural', 'fallback');
+        badge.classList.add(kind);
+        badge.textContent = label;
+        if (modelUsed) badge.setAttribute('title', modelUsed);
+        else badge.removeAttribute('title');
+        (badge as HTMLElement).style.display = 'inline-flex';
+
+        this.lastEngineLabel = label;
+        this.lastModelUsed = modelUsed;
+        const metricEngine = this.els['metricEngine'];
+        if (metricEngine) metricEngine.textContent = label;
+    }
+
+    private hideEngineBadge(): void {
+        const badge = this.els['engineBadge'];
+        if (!badge) return;
+        (badge as HTMLElement).style.display = 'none';
+        badge.textContent = '';
+        badge.removeAttribute('title');
+        badge.classList.remove('neural', 'fallback');
+        this.lastEngineLabel = '';
+        this.lastModelUsed = '';
+    }
+
+    private toggleMetricsPanel(force?: boolean): void {
+        const panel = this.els['metricsPanel'];
+        if (!panel) return;
+        const isOpen = panel.classList.contains('open');
+        const open = force ?? !isOpen;
+        panel.classList.toggle('open', open);
+        panel.setAttribute('aria-hidden', String(!open));
+        if (open) void this.refreshMetricsPanel();
+        this.haptic();
+    }
+
+    private updateSessionLatencyMetric(): void {
+        const el = this.els['metricLatency'];
+        if (!el) return;
+        if (this.sessionLatencies.length === 0) {
+            el.textContent = '—';
+            return;
+        }
+        const avg = Math.round(this.sessionLatencies.reduce((a, b) => a + b, 0) / this.sessionLatencies.length);
+        el.textContent = `${avg} ms`;
+    }
+
+    private async refreshMetricsPanel(): Promise<void> {
+        this.updateSessionLatencyMetric();
+        const bleuEl = this.els['metricBleu'];
+        const engineEl = this.els['metricEngine'];
+        const uptimeEl = this.els['metricUptime'];
+
+        if (engineEl && this.lastEngineLabel) engineEl.textContent = this.lastEngineLabel;
+
+        const metricsUrl = `${this.HF_SPACE_BASE}/metrics`;
+        const healthUrl = `${this.HF_SPACE_BASE}/health`;
+
+        try {
+            const [mRes, hRes] = await Promise.all([
+                this.fetchWithTimeout(metricsUrl, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' }, 8000).catch(() => null),
+                this.fetchWithTimeout(healthUrl, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' }, 8000).catch(() => null),
+            ]);
+
+            if (mRes && mRes.ok) {
+                const m = await mRes.json() as NeuralMetricsResponse;
+                if (bleuEl) bleuEl.textContent = typeof m.bleu_score === 'number' ? m.bleu_score.toFixed(1) : '—';
+            } else {
+                if (bleuEl) bleuEl.textContent = '—';
+            }
+
+            if (hRes && hRes.ok) {
+                const h = await hRes.json() as NeuralHealthResponse;
+                if (uptimeEl && typeof h.uptime_s === 'number') {
+                    const minutes = Math.floor(h.uptime_s / 60);
+                    const hours = Math.floor(minutes / 60);
+                    if (hours > 0) uptimeEl.textContent = `${hours}h ${minutes % 60}m`;
+                    else uptimeEl.textContent = `${minutes}m`;
+                } else {
+                    if (uptimeEl) uptimeEl.textContent = '—';
+                }
+            } else {
+                if (uptimeEl) uptimeEl.textContent = '—';
+            }
+        } catch (err) {
+            this.logStructuredError({ stage: 'metrics_refresh', engine: 'neural', error: err });
+            if (bleuEl) bleuEl.textContent = '—';
+            if (uptimeEl) uptimeEl.textContent = '—';
+        }
+    }
+
+    private async warmUpNeuralApi(): Promise<void> {
+        const url = `${this.HF_SPACE_BASE}/health`;
+        await this.fetchWithTimeout(url, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' }, 8000).catch(() => null);
+    }
+
+    private async tryNeuralTranslate(text: string, sourceLang: string, targetLang: string, onColdStartHint: () => void): Promise<NeuralTranslateResponse | null> {
+        const hintTimer = window.setTimeout(onColdStartHint, 1200);
+        try {
+            const r = await this.fetchWithTimeout(
+                `${this.HF_SPACE_BASE}/translate`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ text, source: sourceLang, target: targetLang }),
+                },
+                35000,
+            ).catch(() => null);
+
+            if (!r || !r.ok) return null;
+            const j = await r.json() as NeuralTranslateResponse;
+            if (!j || typeof j.translated_text !== 'string') return null;
+            return j;
+        } finally {
+            window.clearTimeout(hintTimer);
+        }
     }
 
     // ─── Language Custom Dropdowns ──────────────────────────
@@ -412,8 +629,13 @@ class NeuroTranslatorWeb {
         if (!target) return;
         const sourceWrap = this.els['sourceDropdown'];
         const targetWrap = this.els['targetDropdown'];
-        if (sourceWrap?.contains(target) || targetWrap?.contains(target)) return;
+        const metricsPanel = this.els['metricsPanel'];
+        const metricsToggle = this.els['metricsToggle'];
+        const inDropdown = !!(sourceWrap?.contains(target) || targetWrap?.contains(target));
+        const inMetrics = !!(metricsPanel?.contains(target) || metricsToggle?.contains(target));
+        if (inDropdown) return;
         this.closeDropdowns();
+        if (!inMetrics && metricsPanel?.classList.contains('open')) this.toggleMetricsPanel(false);
     }
 
     private selectLanguage(which: 'source' | 'target', code: string): void {
@@ -548,47 +770,89 @@ class NeuroTranslatorWeb {
         const started = performance.now();
         const sourceLang = this.selectedSource;
         const targetLang = this.selectedTarget;
+        let successful = false;
 
         try {
             let translated = '';
             let confidence = 0;
+            let engineKind: 'neural' | 'fallback' | null = null;
+            let engineLabel = '';
+            let modelUsed = '';
 
-            // Primary: MyMemory
-            const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(src)}&langpair=${sourceLang}|${targetLang}`;
-            const r0 = await fetch(mmUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' }).catch(() => null);
-            if (r0 && r0.ok) {
-                const j0 = await r0.json() as {
-                    responseData?: { translatedText?: string; match?: number };
-                    matches?: Array<{ translation: string; match: number }>;
-                };
-                translated = j0.responseData?.translatedText || '';
-                confidence = (j0.responseData?.match ?? 0) * 100;
+            if (sourceLang === targetLang) {
+                translated = src;
+                confidence = 100;
+                engineKind = 'neural';
+                engineLabel = '🧠 Neural (próprio)';
+                modelUsed = 'identity';
+            } else {
+                const neural = await this.tryNeuralTranslate(
+                    src,
+                    sourceLang,
+                    targetLang,
+                    () => {
+                        if (statusEl) statusEl.textContent = 'Carregando modelo neural... (pode levar ~30s no 1º uso)';
+                    },
+                );
+                if (neural) {
+                    translated = neural.translated_text;
+                    confidence = Math.round(Math.max(0, Math.min(1, neural.confidence || 0)) * 100);
+                    engineKind = 'neural';
+                    engineLabel = '🧠 Neural (próprio)';
+                    modelUsed = neural.model_used || '';
+                }
             }
 
-            // Fallback: LibreTranslate endpoints
+            if (!translated) {
+                const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(src)}&langpair=${sourceLang}|${targetLang}`;
+                const r0 = await this.fetchWithTimeout(mmUrl, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' }, 12000).catch(() => null);
+                if (r0 && r0.ok) {
+                    const j0 = await r0.json() as {
+                        responseData?: { translatedText?: string; match?: number };
+                        matches?: Array<{ translation: string; match: number }>;
+                    };
+                    translated = j0.responseData?.translatedText || '';
+                    confidence = (j0.responseData?.match ?? 0) * 100;
+                    if (translated) {
+                        engineKind = 'fallback';
+                        engineLabel = '☁️ MyMemory';
+                        modelUsed = 'MyMemory';
+                    }
+                }
+            }
+
             if (!translated) {
                 const proxy = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3000/translate' : null;
                 const endpoints = [proxy, 'https://translate.astian.org/translate', 'https://libretranslate.de/translate', 'https://libretranslate.com/translate', 'https://translate.argosopentech.com/translate'].filter(Boolean) as string[];
                 for (const url of endpoints) {
-                    const r = await fetch(url, {
+                    const r = await this.fetchWithTimeout(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         referrerPolicy: 'no-referrer',
                         body: JSON.stringify({ q: src, source: sourceLang === targetLang ? 'auto' : sourceLang, target: targetLang, format: 'text' })
-                    }).catch(() => null);
+                    }, 12000).catch(() => null);
                     if (r && r.ok) {
                         const d = await r.json() as { translatedText?: string };
                         translated = d.translatedText || '';
-                        if (translated) { confidence = 70; break; }
+                        if (translated) {
+                            confidence = 70;
+                            engineKind = 'fallback';
+                            engineLabel = '☁️ Fallback';
+                            modelUsed = url;
+                            break;
+                        }
                     }
                 }
             }
 
             translated = this.preserveCasing(src, translated || src);
             if (tgtEl) tgtEl.value = translated;
-            if (statusEl) statusEl.textContent = 'Tradução concluída';
+            if (statusEl) statusEl.textContent = engineKind === 'neural' ? 'Tradução neural concluída' : 'Tradução concluída';
 
             this.updateConfidence(confidence);
+            if (engineKind) this.setEngineBadge(engineKind, engineLabel, modelUsed);
+            else this.hideEngineBadge();
+            successful = true;
 
             // Save to history & context memory
             const entry: TranslationEntry = {
@@ -608,13 +872,21 @@ class NeuroTranslatorWeb {
                 this.speakOutTranslation();
                 this.voiceInputTriggered = false;
             }
-        } catch {
+        } catch (err) {
             if (tgtEl) tgtEl.value = src;
             if (statusEl) statusEl.textContent = 'Falha na tradução';
+            this.hideEngineBadge();
+            this.logStructuredError({ stage: 'translate', engine: 'client', langPair: `${sourceLang}-${targetLang}`, error: err });
+            this.showToast('Falha na tradução. Tente novamente.');
         } finally {
             const ms = Math.round(performance.now() - started);
             const timeEl = this.els['translationTime'];
             if (timeEl) timeEl.textContent = `${ms} ms`;
+            if (successful && ms > 0) {
+                this.sessionLatencies.push(ms);
+                if (this.sessionLatencies.length > 25) this.sessionLatencies.shift();
+                this.updateSessionLatencyMetric();
+            }
             translateBtn?.removeAttribute('disabled');
             translateBtn?.setAttribute('aria-busy', 'false');
             outputArea?.classList.remove('translating');
@@ -790,12 +1062,17 @@ class NeuroTranslatorWeb {
         const txt = (this.els['targetText'] as HTMLTextAreaElement)?.value.trim();
         if (!txt) return;
         const btn = this.els['speakTranslation'];
-        this.voiceEngine.speakText(
-            txt,
-            this.selectedTarget,
-            () => btn?.classList.add('speaking'),
-            () => btn?.classList.remove('speaking')
-        );
+        try {
+            this.voiceEngine.speakText(
+                txt,
+                this.selectedTarget,
+                () => btn?.classList.add('speaking'),
+                () => btn?.classList.remove('speaking')
+            );
+        } catch (err) {
+            this.logStructuredError({ stage: 'voice_speak', error: err });
+            this.showToast('Falha ao reproduzir a voz.');
+        }
         this.haptic();
     }
 
@@ -945,6 +1222,7 @@ class NeuroTranslatorWeb {
         // Escape → close drawer/modal
         if (e.key === 'Escape') {
             this.closeDropdowns();
+            this.toggleMetricsPanel(false);
             if (this.drawerOpen) this.toggleDrawer(false);
             this.toggleShortcutsModal(false);
         }

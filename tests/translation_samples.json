@@ -1,0 +1,22 @@
+[
+  { "source": "Olá, como você está hoje?", "target": "Hello, how are you today?" },
+  { "source": "Este projeto é totalmente open-source e gratuito.", "target": "This project is completely open-source and free." },
+  { "source": "A tradução acontece em tempo real no navegador.", "target": "Translation happens in real time in the browser." },
+  { "source": "Por favor, envie o arquivo em anexo até amanhã.", "target": "Please send the attached file by tomorrow." },
+  { "source": "Nós precisamos melhorar a experiência do usuário.", "target": "We need to improve the user experience." },
+  { "source": "O sistema detecta automaticamente o idioma do texto.", "target": "The system automatically detects the language of the text." },
+  { "source": "Clique no botão para trocar os idiomas.", "target": "Click the button to swap the languages." },
+  { "source": "A interface usa um tema escuro com glassmorphism.", "target": "The interface uses a dark theme with glassmorphism." },
+  { "source": "A latência média ficou abaixo de 300 milissegundos.", "target": "The average latency was below 300 milliseconds." },
+  { "source": "Vamos publicar uma nova versão com correções e melhorias.", "target": "We are going to publish a new version with fixes and improvements." },
+  { "source": "O modelo foi carregado sob demanda e fica em cache.", "target": "The model is loaded on demand and cached." },
+  { "source": "Se a API estiver offline, o sistema usa um fallback.", "target": "If the API is offline, the system uses a fallback." },
+  { "source": "O objetivo é tornar a tradução neural realmente própria.", "target": "The goal is to make neural translation truly in-house." },
+  { "source": "A documentação explica como configurar os secrets.", "target": "The documentation explains how to configure the secrets." },
+  { "source": "Os testes garantem que tudo funciona como esperado.", "target": "Tests ensure that everything works as expected." },
+  { "source": "Eu gostaria de traduzir este texto para inglês.", "target": "I would like to translate this text into English." },
+  { "source": "A aplicação suporta treze idiomas diferentes.", "target": "The application supports thirteen different languages." },
+  { "source": "A qualidade do áudio depende da voz disponível no dispositivo.", "target": "Audio quality depends on the voice available on the device." },
+  { "source": "A autenticação deve ser feita sem expor tokens no frontend.", "target": "Authentication must be done without exposing tokens on the frontend." },
+  { "source": "Obrigado por usar o NeuroTranslator!", "target": "Thank you for using NeuroTranslator!" }
+]
