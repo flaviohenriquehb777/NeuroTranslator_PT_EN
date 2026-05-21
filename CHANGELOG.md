@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README reescrito para v5.0 com diagrama e links de documentação
 - Estratégia de resiliência: MyMemory passa a ser fallback automático
 
+## [5.0.3] - 2026-05-20
+
+### Fixed
+- Reconhecimento de voz: melhor detecção de texto (interim results) e mensagens quando o microfone não inicia por permissão/bloqueio
+- Leitura da tradução (TTS): aviso quando a voz não dispara no navegador/dispositivo
+- Deploy HF Spaces: validação do `HF_TOKEN` (whoami) e erro mais explícito quando o push é recusado
+
 ## [5.0.2] - 2026-05-20
 
 ### Fixed

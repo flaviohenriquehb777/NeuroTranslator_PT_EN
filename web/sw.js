@@ -1,13 +1,13 @@
-/* NeuroTranslator v5.0.3 — Service Worker */
-const CACHE_NAME = 'neurotranslator-v5.0.3';
+/* NeuroTranslator v5.0.4 — Service Worker */
+const CACHE_NAME = 'neurotranslator-v5.0.4';
 const TRANSLATION_CACHE = 'nt5-translations';
 const MAX_TRANSLATION_ENTRIES = 100;
 
 const PRECACHE = [
     '/',
     '/index.html',
-    '/assets/css/styles.css?v=5.0.3',
-    '/assets/js/script-optimized.js?v=5.0.3',
+    '/assets/css/styles.css?v=5.0.4',
+    '/assets/js/script-optimized.js?v=5.0.4',
     '/assets/images/logo_original.png',
     '/manifest.json'
 ];

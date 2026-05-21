@@ -1,11 +1,11 @@
-# 🧠 NeuroTranslator v5.0
+# 🧠 NeuroTranslator v5.0.3
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![Version](https://img.shields.io/badge/Version-5.0.1-6366f1)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
+[![Version](https://img.shields.io/badge/Version-5.0.3-6366f1)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
 [![CI/CD](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml/badge.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml)
 [![BLEU](https://img.shields.io/badge/BLEU-42.3-brightgreen)](docs/metrics.json)
-[![Bundle](https://img.shields.io/badge/Bundle-9.7KB_gzipped-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml)
+[![Bundle](https://img.shields.io/badge/Bundle-10.1KB_gzipped-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml)
 [![HF Space](https://img.shields.io/badge/%F0%9F%A4%97_HF_Space-Online-yellow)](https://huggingface.co/spaces/Flaviohb7/neurotranslator-api)
 
 <div align="center">
@@ -34,7 +34,7 @@ O **NeuroTranslator v5.0** não é apenas um frontend que chama APIs de terceiro
 |---|---:|
 | BLEU Score (PT→EN) | ~42 |
 | Latência média (modelo) | < 300ms |
-| Bundle size (gzipped) | ~9.7KB |
+| Bundle size (gzipped) | ~10.1KB |
 | Lighthouse Performance | 98 |
 | Cobertura de testes | Em evolução |
 

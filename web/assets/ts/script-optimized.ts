@@ -144,8 +144,17 @@ class VoiceEngine {
     constructor() {
         this.loadVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = () => this.loadVoices();
+            speechSynthesis.onvoiceschanged = () => {
+                this.voiceCache.clear();
+                this.loadVoices();
+            };
         }
+        setTimeout(() => {
+            if (!this.voicesLoaded) this.loadVoices();
+        }, 500);
+        setTimeout(() => {
+            if (!this.voicesLoaded) this.loadVoices();
+        }, 1500);
     }
 
     private loadVoices(): void {
@@ -159,7 +168,7 @@ class VoiceEngine {
     scoreVoice(voice: SpeechSynthesisVoice, langConfig: LangConfig): number {
         let score = 0;
         const name = voice.name.toLowerCase();
-        const lang = voice.lang.toLowerCase();
+        const lang = voice.lang.toLowerCase().replace('_', '-');
 
         // Neural / premium quality keywords
         if (name.includes('neural')) score += 20;
@@ -186,20 +195,24 @@ class VoiceEngine {
     }
 
     getBestVoice(langCode: string): SpeechSynthesisVoice | null {
-        if (this.voiceCache.has(langCode)) {
-            return this.voiceCache.get(langCode)!;
-        }
-
         const config = LANGUAGES[langCode];
         if (!config) return null;
 
         const voices = speechSynthesis.getVoices();
+        if (voices.length === 0) return null;
+
+        // Only use cache if voices have been loaded
+        if (this.voicesLoaded && this.voiceCache.has(langCode)) {
+            return this.voiceCache.get(langCode)!;
+        }
+
         const candidates: VoiceScore[] = [];
 
         for (const voice of voices) {
-            const vLang = voice.lang.toLowerCase();
-            const targetLang = config.bcp47.toLowerCase();
-            if (vLang.startsWith(config.code) || vLang === targetLang) {
+            const vLang = voice.lang.toLowerCase().replace('_', '-');
+            const targetBcp = config.bcp47.toLowerCase();
+            const langPrefix = config.code.toLowerCase();
+            if (vLang.startsWith(langPrefix) || vLang === targetBcp) {
                 candidates.push({ voice, score: this.scoreVoice(voice, config) });
             }
         }
@@ -207,7 +220,7 @@ class VoiceEngine {
         if (candidates.length === 0) return null;
         candidates.sort((a, b) => b.score - a.score);
         const best = candidates[0].voice;
-        this.voiceCache.set(langCode, best);
+        if (this.voicesLoaded) this.voiceCache.set(langCode, best);
         return best;
     }
 
@@ -225,12 +238,20 @@ class VoiceEngine {
         if (!text.trim()) return;
         speechSynthesis.cancel();
 
-        const sentences = text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
         const config = LANGUAGES[langCode];
         const bcp47 = config?.bcp47 || langCode;
         const voice = this.getBestVoice(langCode);
 
+        if (!voice && speechSynthesis.getVoices().length === 0) {
+            setTimeout(() => {
+                this.speakText(text, langCode, onStart, onEnd);
+            }, 600);
+            return;
+        }
+
+        const sentences = text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
         let index = 0;
+
         const speakNext = () => {
             if (index >= sentences.length) {
                 onEnd?.();
@@ -257,7 +278,7 @@ class VoiceEngine {
                     onEnd?.();
                 }
             };
-            utter.onerror = () => {
+            utter.onerror = (e) => {
                 index++;
                 speakNext();
             };
@@ -288,6 +309,9 @@ class NeuroTranslatorWeb {
     private openDropdown: 'source' | 'target' | null = null;
 
     private readonly HF_SPACE_BASE = 'https://flaviohb7-neurotranslator-api.hf.space';
+    private spaceStatus: 'unknown' | 'warming' | 'ready' | 'offline' = 'unknown';
+    private warmUpAttempts = 0;
+    private readonly MAX_WARMUP_ATTEMPTS = 6;
     private sessionLatencies: number[] = [];
     private lastEngineLabel = '';
     private lastModelUsed = '';
@@ -552,8 +576,64 @@ class NeuroTranslatorWeb {
     }
 
     private async warmUpNeuralApi(): Promise<void> {
+        this.spaceStatus = 'warming';
+        this.updateSpaceStatusUI();
+
         const url = `${this.HF_SPACE_BASE}/health`;
-        await this.fetchWithTimeout(url, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' }, 8000).catch(() => null);
+
+        const poll = async (): Promise<void> => {
+            if (this.warmUpAttempts >= this.MAX_WARMUP_ATTEMPTS) {
+                this.spaceStatus = 'offline';
+                this.updateSpaceStatusUI();
+                return;
+            }
+
+            this.warmUpAttempts++;
+            const res = await this.fetchWithTimeout(
+                url,
+                { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' },
+                8000
+            ).catch(() => null);
+
+            if (res && res.ok) {
+                this.spaceStatus = 'ready';
+                this.updateSpaceStatusUI();
+                void this.prefetchModel();
+            } else {
+                setTimeout(poll, 8000);
+            }
+        };
+
+        void poll();
+    }
+
+    private async prefetchModel(): Promise<void> {
+        await this.fetchWithTimeout(
+            `${this.HF_SPACE_BASE}/translate`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'Olá', source: 'pt', target: 'en' }),
+            },
+            40000
+        ).catch(() => null);
+    }
+
+    private updateSpaceStatusUI(): void {
+        const badge = this.els['engineBadge'];
+        if (!badge) return;
+
+        if (this.spaceStatus === 'warming') {
+            badge.textContent = 'Aquecendo modelo...';
+            badge.className = 'engine-badge warming';
+            (badge as HTMLElement).style.display = 'inline-flex';
+        } else if (this.spaceStatus === 'ready') {
+            (badge as HTMLElement).style.display = 'none';
+        } else if (this.spaceStatus === 'offline') {
+            badge.textContent = 'Modo offline (MyMemory)';
+            badge.className = 'engine-badge fallback';
+            (badge as HTMLElement).style.display = 'inline-flex';
+        }
     }
 
     private async tryNeuralTranslate(text: string, sourceLang: string, targetLang: string, onColdStartHint: () => void): Promise<NeuralTranslateResponse | null> {
@@ -567,7 +647,10 @@ class NeuroTranslatorWeb {
                     body: JSON.stringify({ text, source: sourceLang, target: targetLang }),
                 },
                 35000,
-            ).catch(() => null);
+            ).catch((err) => {
+                this.logStructuredError({ stage: 'neural_fetch', engine: 'neural', error: err });
+                return null;
+            });
 
             if (!r || !r.ok) return null;
             const j = await r.json() as NeuralTranslateResponse;
@@ -714,12 +797,30 @@ class NeuroTranslatorWeb {
         rec.interimResults = true;
 
         rec.onresult = (e: Event) => {
-            const r = e as unknown as { results: Array<{ 0: { transcript: string } }> };
-            const last = r.results[r.results.length - 1];
-            const text = last?.[0]?.transcript || '';
-            (this.els['sourceText'] as HTMLTextAreaElement).value = text;
-            this.voiceInputTriggered = true;
-            this.onTextInput();
+            const ev = e as unknown as {
+                results: Array<{ 0: { transcript: string }; isFinal: boolean }>;
+                resultIndex: number;
+            };
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = ev.resultIndex; i < ev.results.length; i++) {
+                const result = ev.results[i];
+                if (result.isFinal) {
+                    finalTranscript += result[0].transcript;
+                } else {
+                    interimTranscript += result[0].transcript;
+                }
+            }
+
+            const srcEl = this.els['sourceText'] as HTMLTextAreaElement;
+            srcEl.value = finalTranscript || interimTranscript;
+            this.updateCharCount(srcEl.value);
+
+            if (finalTranscript) {
+                this.voiceInputTriggered = true;
+                this.onTextInput();
+            }
         };
         rec.onerror = (ev: Event) => {
             const e = ev as unknown as { error?: string; message?: string };
@@ -754,6 +855,8 @@ class NeuroTranslatorWeb {
         // Re-init to pick up latest source language
         this.initSpeechRecognition();
         if (!this.recognition) return;
+        const config = LANGUAGES[this.selectedSource];
+        this.recognition.lang = config?.bcp47 || this.selectedSource;
         try {
             this.speechActive = true;
             this.updateSpeechUI(true);
@@ -836,7 +939,13 @@ class NeuroTranslatorWeb {
                     sourceLang,
                     targetLang,
                     () => {
-                        if (statusEl) statusEl.textContent = 'Carregando modelo neural... (pode levar ~30s no 1º uso)';
+                        if (statusEl) statusEl.textContent = 'Carregando modelo neural... (1ª chamada pode levar ~30s)';
+                        const badge = this.els['engineBadge'];
+                        if (badge) {
+                            badge.textContent = 'Inicializando...';
+                            badge.className = 'engine-badge warming';
+                            (badge as HTMLElement).style.display = 'inline-flex';
+                        }
                     },
                 );
                 if (neural) {
@@ -1003,6 +1112,11 @@ class NeuroTranslatorWeb {
         if (this.autoTranslateEnabled) {
             this.debouncedTranslate();
         }
+    }
+
+    private updateCharCount(text: string): void {
+        const count = this.els['charCount'];
+        if (count) count.textContent = `${text.length} caracteres`;
     }
 
     private debouncedTranslate(): void {
