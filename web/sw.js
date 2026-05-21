@@ -1,34 +1,33 @@
-/* NeuroTranslator v5.0.5 — Service Worker */
-const CACHE_NAME = 'neurotranslator-v5.0.5';
-const TRANSLATION_CACHE = 'nt5-translations';
-const MAX_TRANSLATION_ENTRIES = 100;
+/* NeuroTranslator v5.0.6 — Service Worker */
+const CACHE_VERSION = '5.0.6';
+const STATIC_CACHE = `nt-static-${CACHE_VERSION}`;
+
+const scope = new URL(self.registration.scope);
+const inScope = (url) => url.origin === scope.origin && url.pathname.startsWith(scope.pathname);
+const scopeUrl = (path) => new URL(path, scope).toString();
 
 const PRECACHE = [
-    '/',
-    '/index.html',
-    '/assets/css/styles.css?v=5.0.5',
-    '/assets/js/script-optimized.js?v=5.0.5',
-    '/assets/images/logo_original.png',
-    '/manifest.json'
+    scopeUrl('./'),
+    scopeUrl('index.html'),
+    scopeUrl('assets/css/styles.css?v=5.0.6'),
+    scopeUrl('assets/js/script-optimized.js?v=5.0.6'),
+    scopeUrl('assets/images/logo_original.png'),
+    scopeUrl('manifest.json'),
 ];
 
-// Install: precache static assets
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
+        caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE))
     );
 });
 
-// Activate: clean old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) =>
             Promise.all(
                 keys.map((k) => {
-                    if (k !== CACHE_NAME && k !== TRANSLATION_CACHE) {
-                        return caches.delete(k);
-                    }
+                    if (k.startsWith('nt-static-') && k !== STATIC_CACHE) return caches.delete(k);
                     return Promise.resolve();
                 })
             )
@@ -36,53 +35,42 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: stale-while-revalidate for static assets, cache translations
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    const url = new URL(request.url);
+    if (request.method !== 'GET') return;
 
-    // Skip non-GET for static assets
-    if (request.method === 'GET') {
+    const url = new URL(request.url);
+    if (!inScope(url)) return;
+
+    const accept = request.headers.get('accept') || '';
+    const isHtml = request.mode === 'navigate' || accept.includes('text/html');
+
+    if (isHtml) {
+        const cacheKey = new Request(scopeUrl('index.html'));
         event.respondWith(
-            caches.match(request).then((cached) => {
-                const fetchPromise = fetch(request).then((network) => {
-                    if (network && network.status === 200) {
-                        const copy = network.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-                    }
-                    return network;
-                }).catch(() => cached);
-                return cached || fetchPromise;
-            })
+            fetch(request).then((res) => {
+                if (res && res.ok) {
+                    const copy = res.clone();
+                    caches.open(STATIC_CACHE).then((cache) => cache.put(cacheKey, copy));
+                }
+                return res;
+            }).catch(() => caches.match(cacheKey))
         );
         return;
     }
 
-    // Cache translation POST responses
-    if (request.method === 'POST' && (url.pathname.includes('/translate') || url.hostname.includes('mymemory'))) {
+    const isAsset = url.pathname.includes('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+    if (isAsset) {
         event.respondWith(
-            request.clone().text().then((body) => {
-                const cacheKey = new Request(url.href + '?body=' + encodeURIComponent(body));
-                return caches.match(cacheKey).then((cached) => {
-                    if (cached) return cached;
-                    return fetch(request).then((response) => {
-                        if (response && response.ok) {
-                            const clone = response.clone();
-                            caches.open(TRANSLATION_CACHE).then(async (cache) => {
-                                await cache.put(cacheKey, clone);
-                                // Limit cache size
-                                const keys = await cache.keys();
-                                if (keys.length > MAX_TRANSLATION_ENTRIES) {
-                                    const excess = keys.length - MAX_TRANSLATION_ENTRIES;
-                                    for (let i = 0; i < excess; i++) {
-                                        await cache.delete(keys[i]);
-                                    }
-                                }
-                            });
-                        }
-                        return response;
-                    });
+            caches.match(request).then((cached) => {
+                const fetchPromise = fetch(request).then((network) => {
+                    if (network && network.ok) {
+                        const copy = network.clone();
+                        caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
+                    }
+                    return network;
                 });
+                return cached || fetchPromise;
             })
         );
     }
