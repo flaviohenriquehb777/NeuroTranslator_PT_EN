@@ -1,8 +1,9 @@
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-transformers>=4.35.0
-torch>=2.1.0
-sentencepiece>=0.1.99
-sacremoses>=0.0.53
-pydantic>=2.4.0
-python-multipart>=0.0.6
+--extra-index-url https://download.pytorch.org/whl/cpu
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+transformers==4.48.1
+torch==2.2.2+cpu
+sentencepiece==0.2.0
+sacremoses==0.1.1
+pydantic==2.10.6
+python-multipart==0.0.9
