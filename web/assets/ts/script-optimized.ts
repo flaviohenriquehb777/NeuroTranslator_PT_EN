@@ -9,11 +9,15 @@ interface ISpeechRecognition {
     lang: string;
     continuous: boolean;
     interimResults: boolean;
+    onstart?: () => void;
+    onaudiostart?: () => void;
+    onspeechstart?: () => void;
     onresult: (ev: Event) => void;
     onerror: (ev: Event) => void;
     onend: () => void;
     start: () => void;
     stop: () => void;
+    abort?: () => void;
 }
 
 interface LangConfig {
@@ -140,6 +144,7 @@ function detectLanguage(text: string): { lang: string; confidence: number } | nu
 class VoiceEngine {
     private voiceCache = new Map<string, SpeechSynthesisVoice>();
     private voicesLoaded = false;
+    private voicesLoading = false;
 
     constructor() {
         this.loadVoices();
@@ -161,8 +166,51 @@ class VoiceEngine {
         const voices = speechSynthesis.getVoices();
         if (voices.length > 0) {
             this.voicesLoaded = true;
+            this.voicesLoading = false;
             this.voiceCache.clear();
         }
+    }
+
+    async ensureVoicesLoaded(timeoutMs = 3000): Promise<SpeechSynthesisVoice[]> {
+        const voicesNow = speechSynthesis.getVoices();
+        if (voicesNow.length > 0) {
+            this.voicesLoaded = true;
+            this.voicesLoading = false;
+            return voicesNow;
+        }
+
+        if (this.voicesLoading) {
+            const started = Date.now();
+            while (Date.now() - started < timeoutMs) {
+                const v = speechSynthesis.getVoices();
+                if (v.length > 0) {
+                    this.voicesLoaded = true;
+                    this.voicesLoading = false;
+                    return v;
+                }
+                await new Promise((r) => setTimeout(r, 250));
+            }
+            return [];
+        }
+
+        this.voicesLoading = true;
+        const started = Date.now();
+        while (Date.now() - started < timeoutMs) {
+            const v = speechSynthesis.getVoices();
+            if (v.length > 0) {
+                this.voicesLoaded = true;
+                this.voicesLoading = false;
+                return v;
+            }
+            await new Promise((r) => setTimeout(r, 250));
+        }
+        this.voicesLoading = false;
+        return [];
+    }
+
+    getDefaultVoice(voices?: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+        const v = voices ?? speechSynthesis.getVoices();
+        return v.find((x) => x.default) ?? v[0] ?? null;
     }
 
     scoreVoice(voice: SpeechSynthesisVoice, langConfig: LangConfig): number {
@@ -194,11 +242,11 @@ class VoiceEngine {
         return score;
     }
 
-    getBestVoice(langCode: string): SpeechSynthesisVoice | null {
+    getBestVoice(langCode: string, voicesOverride?: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
         const config = LANGUAGES[langCode];
         if (!config) return null;
 
-        const voices = speechSynthesis.getVoices();
+        const voices = voicesOverride ?? speechSynthesis.getVoices();
         if (voices.length === 0) return null;
 
         // Only use cache if voices have been loaded
@@ -234,13 +282,13 @@ class VoiceEngine {
         try { speechSynthesis.speak(utter); } catch { /* silent */ }
     }
 
-    speakText(text: string, langCode: string, onStart?: () => void, onEnd?: () => void): void {
+    speakText(text: string, langCode: string, onStart?: () => void, onEnd?: () => void, voiceOverride?: SpeechSynthesisVoice | null): void {
         if (!text.trim()) return;
         speechSynthesis.cancel();
 
         const config = LANGUAGES[langCode];
         const bcp47 = config?.bcp47 || langCode;
-        const voice = this.getBestVoice(langCode);
+        const voice = voiceOverride ?? this.getBestVoice(langCode);
 
         if (!voice && speechSynthesis.getVoices().length === 0) {
             setTimeout(() => {
@@ -296,6 +344,12 @@ class NeuroTranslatorWeb {
     private speechActive = false;
     private speechSupported = false;
     private voiceInputTriggered = false;
+    private readonly APP_VERSION = '5.0.6';
+    private debugEnabled = false;
+    private speechState: 'idle' | 'starting' | 'listening' | 'processing' | 'error' = 'idle';
+    private speechStopRequested = false;
+    private speechRetryAfter = 0;
+    private speechNetworkRetries = 0;
 
     private autoTranslateEnabled = true;
     private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -309,6 +363,8 @@ class NeuroTranslatorWeb {
     private openDropdown: 'source' | 'target' | null = null;
 
     private readonly HF_SPACE_BASE = 'https://flaviohb7-neurotranslator-api.hf.space';
+    private warmUpInFlight = false;
+    private warmUpNextDelayMs = 8000;
     private spaceStatus: 'unknown' | 'warming' | 'ready' | 'offline' = 'unknown';
     private warmUpAttempts = 0;
     private readonly MAX_WARMUP_ATTEMPTS = 6;
@@ -329,6 +385,7 @@ class NeuroTranslatorWeb {
     // ─── Initialisation ─────────────────────────────────────
 
     private init(): void {
+        this.debugEnabled = new URLSearchParams(window.location.search).get('debug') === '1';
         this.cacheElements();
         this.autoTranslateEnabled = (this.els['autoTranslateToggle'] as HTMLInputElement | undefined)?.checked ?? true;
         this.buildLanguageDropdowns();
@@ -456,6 +513,16 @@ class NeuroTranslatorWeb {
         console.error(out);
     }
 
+    private logDebug(stage: string, data?: Record<string, unknown>): void {
+        if (!this.debugEnabled) return;
+        const out = {
+            timestamp: new Date().toISOString(),
+            stage,
+            ...data,
+        };
+        console.log(out);
+    }
+
     private showToast(message: string): void {
         const toast = this.els['toast'];
         if (!toast) return;
@@ -576,6 +643,8 @@ class NeuroTranslatorWeb {
     }
 
     private async warmUpNeuralApi(): Promise<void> {
+        if (this.warmUpInFlight || this.spaceStatus === 'ready') return;
+        this.warmUpInFlight = true;
         this.spaceStatus = 'warming';
         this.updateSpaceStatusUI();
 
@@ -585,22 +654,27 @@ class NeuroTranslatorWeb {
             if (this.warmUpAttempts >= this.MAX_WARMUP_ATTEMPTS) {
                 this.spaceStatus = 'offline';
                 this.updateSpaceStatusUI();
+                this.warmUpInFlight = false;
                 return;
             }
 
             this.warmUpAttempts++;
+            this.logDebug('warmup_poll', { attempt: this.warmUpAttempts, delayMs: this.warmUpNextDelayMs });
             const res = await this.fetchWithTimeout(
                 url,
                 { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' },
-                8000
+                6000
             ).catch(() => null);
 
             if (res && res.ok) {
                 this.spaceStatus = 'ready';
                 this.updateSpaceStatusUI();
+                this.warmUpInFlight = false;
+                this.warmUpNextDelayMs = 8000;
                 void this.prefetchModel();
             } else {
-                setTimeout(poll, 8000);
+                this.warmUpNextDelayMs = Math.min(30000, Math.round(this.warmUpNextDelayMs * 1.6));
+                setTimeout(poll, this.warmUpNextDelayMs);
             }
         };
 
@@ -637,7 +711,8 @@ class NeuroTranslatorWeb {
     }
 
     private async tryNeuralTranslate(text: string, sourceLang: string, targetLang: string, onColdStartHint: () => void): Promise<NeuralTranslateResponse | null> {
-        const hintTimer = window.setTimeout(onColdStartHint, 1200);
+        const fastMode = this.spaceStatus !== 'ready';
+        const hintTimer = window.setTimeout(onColdStartHint, fastMode ? 600 : 1200);
         try {
             const r = await this.fetchWithTimeout(
                 `${this.HF_SPACE_BASE}/translate`,
@@ -646,7 +721,7 @@ class NeuroTranslatorWeb {
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ text, source: sourceLang, target: targetLang }),
                 },
-                35000,
+                fastMode ? 3500 : 35000,
             ).catch((err) => {
                 this.logStructuredError({ stage: 'neural_fetch', engine: 'neural', error: err });
                 return null;
@@ -656,7 +731,11 @@ class NeuroTranslatorWeb {
             const j = await r.json() as NeuralTranslateResponse;
             if (!j || typeof j.translated_text !== 'string') return null;
             return j;
+        } catch (err) {
+            this.logStructuredError({ stage: 'neural_translate', engine: 'neural', error: err });
+            return null;
         } finally {
+            if (fastMode) void this.warmUpNeuralApi();
             window.clearTimeout(hintTimer);
         }
     }
@@ -764,6 +843,7 @@ class NeuroTranslatorWeb {
     private onSourceLangChange(): void {
         this.renderDropdownOptions('source');
         this.updateDropdownCurrent('source');
+        if (this.speechState !== 'idle') this.requestStopSpeech('lang_change');
         this.voiceEngine.warmUp(this.selectedSource);
         // Re-detect if needed
         const txt = (this.els['sourceText'] as HTMLTextAreaElement)?.value;
@@ -791,12 +871,18 @@ class NeuroTranslatorWeb {
         if (!Cons) { this.speechSupported = false; return; }
 
         const rec = new Cons();
-        const config = LANGUAGES[this.selectedSource];
-        rec.lang = config?.bcp47 || this.selectedSource;
         rec.continuous = false;
         rec.interimResults = true;
 
+        rec.onstart = () => {
+            this.logDebug('speech_onstart', { state: this.speechState });
+            this.setSpeechState('listening');
+        };
+        rec.onaudiostart = () => this.logDebug('speech_onaudiostart');
+        rec.onspeechstart = () => this.logDebug('speech_onspeechstart');
+
         rec.onresult = (e: Event) => {
+            this.logDebug('speech_onresult');
             const ev = e as unknown as {
                 results: Array<{ 0: { transcript: string }; isFinal: boolean }>;
                 resultIndex: number;
@@ -806,11 +892,8 @@ class NeuroTranslatorWeb {
 
             for (let i = ev.resultIndex; i < ev.results.length; i++) {
                 const result = ev.results[i];
-                if (result.isFinal) {
-                    finalTranscript += result[0].transcript;
-                } else {
-                    interimTranscript += result[0].transcript;
-                }
+                if (result.isFinal) finalTranscript += result[0].transcript;
+                else interimTranscript += result[0].transcript;
             }
 
             const srcEl = this.els['sourceText'] as HTMLTextAreaElement;
@@ -818,25 +901,29 @@ class NeuroTranslatorWeb {
             this.updateCharCount(srcEl.value);
 
             if (finalTranscript) {
+                this.setSpeechState('processing');
                 this.voiceInputTriggered = true;
                 this.onTextInput();
             }
         };
+
         rec.onerror = (ev: Event) => {
             const e = ev as unknown as { error?: string; message?: string };
             const code = (e.error || '').toString();
-            if (code === 'not-allowed' || code === 'service-not-allowed') {
-                this.showToast('Microfone bloqueado. Permita o acesso ao microfone no navegador.');
-            } else if (code === 'no-speech') {
-                this.showToast('Nenhuma fala detectada. Tente novamente.');
-            } else if (code) {
-                this.showToast(`Reconhecimento de voz falhou: ${code}`);
-            } else {
-                this.showToast('Reconhecimento de voz falhou.');
-            }
-            this.stopSpeech();
+            this.logDebug('speech_onerror', { code, message: e.message });
+            this.handleSpeechError(code);
         };
-        rec.onend = () => this.stopSpeech();
+
+        rec.onend = () => {
+            this.logDebug('speech_onend', { stopRequested: this.speechStopRequested, state: this.speechState });
+            if (this.speechStopRequested) {
+                this.setSpeechState('idle');
+                this.speechStopRequested = false;
+                return;
+            }
+            if (this.speechState !== 'idle') this.setSpeechState('idle');
+        };
+
         this.recognition = rec;
     }
 
@@ -845,46 +932,121 @@ class NeuroTranslatorWeb {
             this.showToast('Reconhecimento de voz: disponível no Chrome (desktop/Android).');
             return;
         }
-        if (!this.recognition) this.initSpeechRecognition();
-        if (!this.recognition) return;
-        this.speechActive ? this.stopSpeech() : this.startSpeech();
+        if (this.speechState === 'starting' || this.speechState === 'listening' || this.speechState === 'processing') {
+            this.requestStopSpeech('user_toggle_stop');
+            this.haptic();
+            return;
+        }
+
+        if (Date.now() < this.speechRetryAfter) {
+            const seconds = Math.max(1, Math.ceil((this.speechRetryAfter - Date.now()) / 1000));
+            this.showToast(`Aguarde ${seconds}s e toque em “Falar” novamente.`);
+            this.haptic();
+            return;
+        }
+
+        this.startSpeech();
         this.haptic();
     }
 
     private startSpeech(): void {
-        // Re-init to pick up latest source language
-        this.initSpeechRecognition();
+        if (!this.recognition) this.initSpeechRecognition();
         if (!this.recognition) return;
+        if (this.speechState !== 'idle' && this.speechState !== 'error') return;
+
         const config = LANGUAGES[this.selectedSource];
         this.recognition.lang = config?.bcp47 || this.selectedSource;
         try {
-            this.speechActive = true;
-            this.updateSpeechUI(true);
+            this.speechStopRequested = false;
+            this.setSpeechState('starting');
             this.recognition.start();
         } catch (err) {
-            this.speechActive = false;
-            this.updateSpeechUI(false);
+            this.setSpeechState('idle');
             this.logStructuredError({ stage: 'speech_start', error: err });
             this.showToast('Não foi possível iniciar o microfone. Verifique a permissão do microfone no navegador.');
         }
     }
 
-    private stopSpeech(): void {
+    private requestStopSpeech(reason: string): void {
+        this.logDebug('speech_stop_requested', { reason, state: this.speechState });
+        this.speechStopRequested = true;
         try { this.recognition?.stop(); } catch { /* ok */ }
-        this.speechActive = false;
-        this.updateSpeechUI(false);
+        try { this.recognition?.abort?.(); } catch { /* ok */ }
+        this.setSpeechState('idle');
     }
 
-    private updateSpeechUI(active: boolean): void {
+    private setSpeechState(state: 'idle' | 'starting' | 'listening' | 'processing' | 'error'): void {
+        this.speechState = state;
+        this.speechActive = state === 'starting' || state === 'listening' || state === 'processing';
+        this.updateSpeechUI();
+    }
+
+    private updateSpeechUI(): void {
         const btn = this.els['toggleSpeech'];
         const status = this.els['speechStatus'];
+        const btnLabel = btn?.querySelector('span');
+
         if (btn) {
+            const active = this.speechActive;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', String(active));
         }
-        if (status) {
-            status.textContent = active ? '🎤 Ouvindo...' : '🎤 Reconhecimento: Desativado';
+
+        if (btnLabel) {
+            if (this.speechState === 'starting') btnLabel.textContent = 'Iniciando...';
+            else if (this.speechState === 'listening') btnLabel.textContent = 'Ouvindo...';
+            else btnLabel.textContent = 'Falar';
         }
+
+        if (status) {
+            if (this.speechState === 'starting') status.textContent = '🎤 Reconhecimento: Iniciando...';
+            else if (this.speechState === 'listening') status.textContent = '🎤 Ouvindo...';
+            else status.textContent = '🎤 Reconhecimento: Desativado';
+        }
+    }
+
+    private handleSpeechError(code: string): void {
+        this.setSpeechState('error');
+        this.speechStopRequested = true;
+        try { this.recognition?.stop(); } catch { /* ok */ }
+        try { this.recognition?.abort?.(); } catch { /* ok */ }
+
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+            this.showToast('Microfone bloqueado. Permita o microfone nas permissões do site e tente novamente.');
+            this.speechNetworkRetries = 0;
+            this.speechRetryAfter = 0;
+            return;
+        }
+
+        if (code === 'no-speech') {
+            this.showToast('Nenhuma fala detectada. Toque em “Falar” e tente novamente.');
+            this.speechNetworkRetries = 0;
+            this.speechRetryAfter = 0;
+            return;
+        }
+
+        if (code === 'aborted') {
+            this.showToast('Reconhecimento interrompido.');
+            return;
+        }
+
+        if (code === 'network') {
+            this.speechNetworkRetries++;
+            const delay = Math.min(8000, 1000 * (2 ** Math.max(0, this.speechNetworkRetries - 1)));
+            this.speechRetryAfter = Date.now() + delay;
+
+            if (this.speechNetworkRetries >= 4) {
+                this.showToast('Serviço de reconhecimento indisponível (network). Tente novamente mais tarde.');
+                return;
+            }
+
+            const seconds = Math.max(1, Math.ceil(delay / 1000));
+            this.showToast(`Serviço de reconhecimento falhou (network). Aguarde ${seconds}s e tente novamente.`);
+            return;
+        }
+
+        if (code) this.showToast(`Reconhecimento de voz falhou: ${code}`);
+        else this.showToast('Reconhecimento de voz falhou.');
     }
 
     // ─── Translation Engine ─────────────────────────────────
@@ -948,6 +1110,9 @@ class NeuroTranslatorWeb {
                         }
                     },
                 );
+                if (!neural && this.spaceStatus !== 'ready') {
+                    if (statusEl) statusEl.textContent = 'Provável cold start. Usando fallback rápido enquanto o modelo aquece...';
+                }
                 if (neural) {
                     translated = neural.translated_text;
                     confidence = Math.round(Math.max(0, Math.min(1, neural.confidence || 0)) * 100);
@@ -1226,18 +1391,44 @@ class NeuroTranslatorWeb {
         this.haptic();
     }
 
-    private speakOutTranslation(): void {
+    private async speakOutTranslation(): Promise<void> {
         const txt = (this.els['targetText'] as HTMLTextAreaElement)?.value.trim();
         if (!txt) return;
         const btn = this.els['speakTranslation'];
         try {
+            const voices = await this.voiceEngine.ensureVoicesLoaded(3000);
+            if (voices.length === 0) {
+                this.showToast('Nenhuma voz instalada/disponível neste dispositivo. Instale vozes do sistema e tente novamente.');
+                return;
+            }
+
+            const target = this.selectedTarget;
+            const best = this.voiceEngine.getBestVoice(target, voices);
+            const langLabel = LANGUAGES[target]?.label || target;
+            let voiceToUse: SpeechSynthesisVoice | null = best;
+
+            if (!voiceToUse) {
+                voiceToUse = this.voiceEngine.getDefaultVoice(voices);
+                if (!voiceToUse) {
+                    this.showToast(`Sem vozes disponíveis para ${langLabel}.`);
+                    return;
+                }
+                if (target === 'en') {
+                    this.showToast('Sem vozes em inglês instaladas. Usando voz padrão do dispositivo. Para melhorar, instale vozes “English” no sistema.');
+                } else {
+                    this.showToast(`Sem voz para ${langLabel}. Usando voz padrão do dispositivo.`);
+                }
+            }
+
+            this.logDebug('tts_speak_request', { target, voice: voiceToUse.name, lang: voiceToUse.lang, default: voiceToUse.default });
+
             let started = false;
             const watchdog = window.setTimeout(() => {
-                if (!started) this.showToast('Voz indisponível neste dispositivo/navegador.');
+                if (!started) this.showToast('A reprodução de voz foi bloqueada/indisponível. Toque novamente ou verifique as permissões de mídia do navegador.');
             }, 1400);
             this.voiceEngine.speakText(
                 txt,
-                this.selectedTarget,
+                target,
                 () => {
                     started = true;
                     window.clearTimeout(watchdog);
@@ -1246,7 +1437,8 @@ class NeuroTranslatorWeb {
                 () => {
                     window.clearTimeout(watchdog);
                     btn?.classList.remove('speaking');
-                }
+                },
+                voiceToUse
             );
         } catch (err) {
             this.logStructuredError({ stage: 'voice_speak', error: err });
@@ -1426,7 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLocal) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(reg => reg.unregister()));
         } else {
-            navigator.serviceWorker.register('sw.js').catch(() => { /* ok */ });
+            navigator.serviceWorker.register('sw.js?v=5.0.6').catch(() => { /* ok */ });
         }
     }
 });
