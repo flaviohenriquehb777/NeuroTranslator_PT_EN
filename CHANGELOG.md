@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README reescrito para v5.0 com diagrama e links de documentação
 - Estratégia de resiliência: MyMemory passa a ser fallback automático
 
+## [5.0.5] - 2026-05-21
+
+### Fixed
+- CI (frontend): correção de erro de lint (variável não utilizada) que quebrava o job `npm run lint`
+
+## [5.0.4] - 2026-05-20
+
+### Fixed
+- Engine neural: base URL do HF Space mantida no owner correto (`Flaviohb7`) para evitar queda silenciosa no fallback
+- Warm-up: polling do `/health` com estado visual (warming/ready/offline) e prefetch de modelo (PT→EN)
+- Voz (TTS): seleção de vozes mais robusta e retry quando `getVoices()` ainda não carregou
+- Reconhecimento de voz: acumula resultados (interim/final) e traduz apenas quando o resultado for final
+
 ## [5.0.3] - 2026-05-20
 
 ### Fixed

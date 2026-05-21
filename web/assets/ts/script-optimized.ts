@@ -278,7 +278,7 @@ class VoiceEngine {
                     onEnd?.();
                 }
             };
-            utter.onerror = (e) => {
+            utter.onerror = () => {
                 index++;
                 speakNext();
             };

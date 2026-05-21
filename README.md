@@ -1,8 +1,8 @@
-# 🧠 NeuroTranslator v5.0.3
+# 🧠 NeuroTranslator v5.0.5
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/blob/main/LICENSE.md)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://flaviohenriquehb777.github.io/NeuroTranslator_PT_EN/)
-[![Version](https://img.shields.io/badge/Version-5.0.3-6366f1)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
+[![Version](https://img.shields.io/badge/Version-5.0.5-6366f1)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN)
 [![CI/CD](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml/badge.svg)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml)
 [![BLEU](https://img.shields.io/badge/BLEU-42.3-brightgreen)](docs/metrics.json)
 [![Bundle](https://img.shields.io/badge/Bundle-10.1KB_gzipped-blue)](https://github.com/flaviohenriquehb777/NeuroTranslator_PT_EN/actions/workflows/ci.yml)
