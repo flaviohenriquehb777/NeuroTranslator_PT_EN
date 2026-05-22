@@ -155,10 +155,16 @@ class VoiceEngine {
             };
         }
         setTimeout(() => {
-            if (!this.voicesLoaded) this.loadVoices();
+            if (speechSynthesis.getVoices().length > 0 && this.voiceCache.size === 0) {
+                this.voiceCache.clear();
+                this.loadVoices();
+            }
         }, 500);
         setTimeout(() => {
-            if (!this.voicesLoaded) this.loadVoices();
+            if (speechSynthesis.getVoices().length > 0 && this.voiceCache.size === 0) {
+                this.voiceCache.clear();
+                this.loadVoices();
+            }
         }, 1500);
     }
 
@@ -290,10 +296,8 @@ class VoiceEngine {
         const bcp47 = config?.bcp47 || langCode;
         const voice = voiceOverride ?? this.getBestVoice(langCode);
 
-        if (!voice && speechSynthesis.getVoices().length === 0) {
-            setTimeout(() => {
-                this.speakText(text, langCode, onStart, onEnd);
-            }, 600);
+        if (speechSynthesis.getVoices().length === 0) {
+            setTimeout(() => this.speakText(text, langCode, onStart, onEnd, voiceOverride), 700);
             return;
         }
 
@@ -326,7 +330,9 @@ class VoiceEngine {
                     onEnd?.();
                 }
             };
-            utter.onerror = () => {
+            utter.onerror = (e: SpeechSynthesisErrorEvent) => {
+                const ev = e as unknown as { error?: string };
+                console.warn('[VoiceEngine] Erro de voz:', ev.error, '| lang:', bcp47, '| voice:', voice?.name ?? 'nenhuma');
                 index++;
                 speakNext();
             };
