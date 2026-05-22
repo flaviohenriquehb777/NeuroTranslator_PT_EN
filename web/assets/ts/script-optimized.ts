@@ -5,6 +5,8 @@
 
 // ─── Types & Interfaces ────────────────────────────────────────
 
+import { PunctuationPipeline } from './punctuation/pipeline';
+
 interface ISpeechRecognition {
     lang: string;
     continuous: boolean;
@@ -350,12 +352,18 @@ class NeuroTranslatorWeb {
     private speechActive = false;
     private speechSupported = false;
     private voiceInputTriggered = false;
-    private readonly APP_VERSION = '5.0.6';
+    private readonly APP_VERSION = '5.0.7';
     private debugEnabled = false;
     private speechState: 'idle' | 'starting' | 'listening' | 'processing' | 'error' = 'idle';
     private speechStopRequested = false;
     private speechRetryAfter = 0;
     private speechNetworkRetries = 0;
+    private speechPunctuationInFlight = false;
+
+    private punctuationPipeline = new PunctuationPipeline();
+    private lastPunctuationEngine: string = '';
+    private lastPunctuationLatencyMs = 0;
+    private lastPunctuationChanges = 0;
 
     private autoTranslateEnabled = true;
     private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -420,6 +428,7 @@ class NeuroTranslatorWeb {
             'engineBadge',
             'metricsToggle', 'metricsPanel', 'metricsClose',
             'metricBleu', 'metricLatency', 'metricEngine', 'metricUptime',
+            'metricPunctuationEngine', 'metricPunctuationLatency', 'metricPunctuationChanges',
             'toast',
         ];
         for (const id of ids) {
@@ -609,8 +618,14 @@ class NeuroTranslatorWeb {
         const bleuEl = this.els['metricBleu'];
         const engineEl = this.els['metricEngine'];
         const uptimeEl = this.els['metricUptime'];
+        const pEngineEl = this.els['metricPunctuationEngine'];
+        const pLatencyEl = this.els['metricPunctuationLatency'];
+        const pChangesEl = this.els['metricPunctuationChanges'];
 
         if (engineEl && this.lastEngineLabel) engineEl.textContent = this.lastEngineLabel;
+        if (pEngineEl) pEngineEl.textContent = this.lastPunctuationEngine || '—';
+        if (pLatencyEl) pLatencyEl.textContent = this.lastPunctuationLatencyMs > 0 ? `${this.lastPunctuationLatencyMs} ms` : '—';
+        if (pChangesEl) pChangesEl.textContent = this.lastPunctuationChanges > 0 ? String(this.lastPunctuationChanges) : '—';
 
         const metricsUrl = `${this.HF_SPACE_BASE}/metrics`;
         const healthUrl = `${this.HF_SPACE_BASE}/health`;
@@ -907,9 +922,7 @@ class NeuroTranslatorWeb {
             this.updateCharCount(srcEl.value);
 
             if (finalTranscript) {
-                this.setSpeechState('processing');
-                this.voiceInputTriggered = true;
-                this.onTextInput();
+                void this.handleSpeechFinalTranscript(finalTranscript);
             }
         };
 
@@ -931,6 +944,47 @@ class NeuroTranslatorWeb {
         };
 
         this.recognition = rec;
+    }
+
+    private async handleSpeechFinalTranscript(finalTranscript: string): Promise<void> {
+        if (this.speechPunctuationInFlight) return;
+        this.speechPunctuationInFlight = true;
+        this.setSpeechState('processing');
+
+        try {
+            const config = LANGUAGES[this.selectedSource];
+            const langHint = config?.code || this.selectedSource;
+            const result = await this.punctuationPipeline.punctuateSpeechFinal(finalTranscript, langHint, {
+                apiBase: this.HF_SPACE_BASE,
+                enableClaudeRefine: false,
+                fetchWithTimeout: this.fetchWithTimeout.bind(this),
+                isOnline: navigator.onLine,
+                minCharsForClaude: 28,
+                minIntervalMs: 25000,
+            });
+
+            const srcEl = this.els['sourceText'] as HTMLTextAreaElement;
+            srcEl.value = result.punctuatedText;
+            this.updateCharCount(srcEl.value);
+
+            this.lastPunctuationEngine = result.engine;
+            this.lastPunctuationLatencyMs = result.latencyMs;
+            this.lastPunctuationChanges = result.changesApplied;
+
+            this.logDebug('punctuation_done', {
+                engine: result.engine,
+                latencyMs: result.latencyMs,
+                changesApplied: result.changesApplied,
+            });
+
+            const panel = this.els['metricsPanel'];
+            if (panel?.classList.contains('open')) void this.refreshMetricsPanel();
+
+            this.voiceInputTriggered = true;
+            this.onTextInput();
+        } finally {
+            this.speechPunctuationInFlight = false;
+        }
     }
 
     private toggleSpeech(): void {
@@ -1001,12 +1055,14 @@ class NeuroTranslatorWeb {
         if (btnLabel) {
             if (this.speechState === 'starting') btnLabel.textContent = 'Iniciando...';
             else if (this.speechState === 'listening') btnLabel.textContent = 'Ouvindo...';
+            else if (this.speechState === 'processing') btnLabel.textContent = 'Processando...';
             else btnLabel.textContent = 'Falar';
         }
 
         if (status) {
             if (this.speechState === 'starting') status.textContent = '🎤 Reconhecimento: Iniciando...';
             else if (this.speechState === 'listening') status.textContent = '🎤 Ouvindo...';
+            else if (this.speechState === 'processing') status.textContent = '📝 Pontuando texto...';
             else status.textContent = '🎤 Reconhecimento: Desativado';
         }
     }
@@ -1293,6 +1349,26 @@ class NeuroTranslatorWeb {
     private debouncedTranslate(): void {
         if (this.debounceTimer) clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => this.translateText(), 300);
+    }
+
+    public async punctuateAndTranslateForTest(rawText: string): Promise<{ punctuatedText: string; engine: string }> {
+        const config = LANGUAGES[this.selectedSource];
+        const langHint = config?.code || this.selectedSource;
+        const result = await this.punctuationPipeline.punctuateSpeechFinal(rawText, langHint, {
+            apiBase: this.HF_SPACE_BASE,
+            enableClaudeRefine: false,
+            fetchWithTimeout: this.fetchWithTimeout.bind(this),
+            isOnline: navigator.onLine,
+            minCharsForClaude: 28,
+            minIntervalMs: 25000,
+        });
+
+        const srcEl = this.els['sourceText'] as HTMLTextAreaElement;
+        srcEl.value = result.punctuatedText;
+        this.updateCharCount(srcEl.value);
+        this.voiceInputTriggered = false;
+        await this.translateText();
+        return { punctuatedText: result.punctuatedText, engine: result.engine };
     }
 
     // ─── Smart Swap ─────────────────────────────────────────
@@ -1624,7 +1700,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLocal) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(reg => reg.unregister()));
         } else {
-            navigator.serviceWorker.register('sw.js?v=5.0.6').catch(() => { /* ok */ });
+            navigator.serviceWorker.register('sw.js?v=5.0.7').catch(() => { /* ok */ });
         }
     }
 });

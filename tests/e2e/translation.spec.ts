@@ -155,3 +155,42 @@ test('fallback para MyMemory funciona quando API neural está offline', async ({
   await expect(page.locator('#engineBadge')).toContainText('MyMemory');
 });
 
+test('pontuação offline é usada antes de traduzir (speech pipeline)', async ({ page }) => {
+  await page.route(`${HF_BASE}/health`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok', uptime_s: 3600 }),
+    });
+  });
+
+  let seenText = '';
+  await page.route(`${HF_BASE}/translate`, async (route) => {
+    const post = route.request().postData() || '';
+    try { seenText = (JSON.parse(post) as any)?.text || ''; } catch {}
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        translated_text: 'Where is the nearest station?',
+        model_used: 'Helsinki-NLP/opus-mt-pt-en',
+        confidence: 0.9,
+        latency_ms: 120,
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await setAutoTranslate(page, false);
+
+  const result = await page.evaluate(async () => {
+    const app = (window as any).neuroTranslator;
+    return await app.punctuateAndTranslateForTest('onde fica a estação mais próxima');
+  });
+
+  await expect(page.locator('#sourceText')).toHaveValue('Onde fica a estação mais próxima?');
+  expect(result.punctuatedText).toBe('Onde fica a estação mais próxima?');
+  expect(seenText).toBe('Onde fica a estação mais próxima?');
+  await expect(page.locator('#targetText')).toHaveValue('Where is the nearest station?');
+});
+

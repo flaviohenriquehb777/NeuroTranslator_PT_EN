@@ -1,5 +1,5 @@
-/* NeuroTranslator v5.0.6 — Service Worker */
-const CACHE_VERSION = '5.0.6';
+/* NeuroTranslator v5.0.7 — Service Worker */
+const CACHE_VERSION = '5.0.7';
 const STATIC_CACHE = `nt-static-${CACHE_VERSION}`;
 
 const scope = new URL(self.registration.scope);
@@ -9,8 +9,8 @@ const scopeUrl = (path) => new URL(path, scope).toString();
 const PRECACHE = [
     scopeUrl('./'),
     scopeUrl('index.html'),
-    scopeUrl('assets/css/styles.css?v=5.0.6'),
-    scopeUrl('assets/js/script-optimized.js?v=5.0.6'),
+    scopeUrl('assets/css/styles.css?v=5.0.7'),
+    scopeUrl('assets/js/script-optimized.js?v=5.0.7'),
     scopeUrl('assets/images/logo_original.png'),
     scopeUrl('manifest.json'),
 ];
